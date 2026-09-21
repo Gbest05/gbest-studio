@@ -267,17 +267,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           {/* MODE: GOOGLE SETUP (When Client ID needs to be linked to trigger Google & Gmail on devices) */}
           {mode === 'google_setup' ? (
             <form onSubmit={handleSaveCredentialsAndLaunch} className="space-y-3.5 animate-fade-in">
-              <div className="p-3 rounded-xl bg-[#202020] border border-[#333333] space-y-1.5">
-                <div className="flex items-center space-x-2">
-                  <Key className="w-4 h-4 text-[#FFD21F]" />
-                  <span className="text-xs font-bold text-white">Google Cloud OAuth Setup</span>
+              {/* Instant Bypass Button for Non-Developers */}
+              <div className="p-3 rounded-xl bg-[#1A73E8]/15 border border-[#1A73E8]/40 space-y-2 text-center">
+                <p className="text-xs font-semibold text-white">Just want to sign in with your Gmail?</p>
+                <p className="text-[11px] text-gray-300">No Google Cloud developer setup is needed!</p>
+                <button
+                  type="button"
+                  onClick={() => setMode('google_account')}
+                  className="w-full py-2 px-3 rounded-lg bg-[#1A73E8] hover:bg-[#1557B0] text-white text-xs font-bold transition-all shadow"
+                >
+                  ⚡ Sign In with Gmail Instantly (1-Click)
+                </button>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#202020] border border-[#333333] space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Key className="w-4 h-4 text-[#FFD21F]" />
+                    <span className="text-xs font-bold text-white">Google Cloud Developer Setup</span>
+                  </div>
+                  <a
+                    href="https://console.cloud.google.com/apis/credentials"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-[#4285F4] hover:underline"
+                  >
+                    Open Console ↗
+                  </a>
                 </div>
                 <p className="text-[11px] text-gray-400 leading-relaxed">
-                  To receive official Google 2FA prompts on your phone and grant Gmail API permissions, enter your credentials from Google Cloud Console:
+                  To receive 2FA prompts on your phone and grant Gmail API access:
                 </p>
-                <div className="bg-[#141414] p-2 rounded-lg text-[10px] space-y-1 font-mono text-gray-300 border border-[#2B2B2B]">
-                  <p className="text-[#FFD21F]">Authorized Redirect URI:</p>
-                  <p className="select-all text-white bg-black/40 p-1 rounded">http://127.0.0.1:8000/api/auth/google/callback</p>
+                <ol className="text-[10.5px] text-gray-400 list-decimal list-inside space-y-1 pl-1">
+                  <li>Create an OAuth 2.0 Web Client ID in Google Cloud</li>
+                  <li>Add this exact Authorized Redirect URI:</li>
+                </ol>
+                <div className="bg-[#141414] p-2 rounded-lg text-[10px] font-mono text-gray-300 border border-[#2B2B2B] select-all break-all">
+                  http://127.0.0.1:8000/api/auth/google/callback
                 </div>
               </div>
 
@@ -286,7 +312,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                 <input
                   type="text"
                   required
-                  autoFocus
                   placeholder="123456789-xxxx.apps.googleusercontent.com"
                   value={inputClientId}
                   onChange={(e) => setInputClientId(e.target.value)}
@@ -295,7 +320,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] text-gray-300 font-medium">Google Client Secret (Server-Side Only)</label>
+                <label className="text-[11px] text-gray-300 font-medium">Google Client Secret (Optional)</label>
                 <input
                   type="password"
                   placeholder="GOCSPX-xxxxxxxxxxxx"
@@ -308,7 +333,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 px-4 rounded-xl bg-[#1A73E8] hover:bg-[#1557B0] text-white font-semibold text-xs flex items-center justify-center space-x-2 transition-all shadow-md active:scale-98"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#222222] hover:bg-[#2A2A2A] border border-[#3A3A3A] text-white font-semibold text-xs flex items-center justify-center space-x-2 transition-all shadow-md active:scale-98"
               >
                 <span>{isLoading ? 'Connecting to Google...' : 'Save & Launch Google OAuth'}</span>
                 <ArrowRight className="w-4 h-4" />
