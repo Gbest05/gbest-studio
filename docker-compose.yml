@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  gbest-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gbest-studio
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=sqlite+aiosqlite:///./gbest_studio.db
+      - MAX_UPLOAD_SIZE_MB=500
+      - WHISPER_MODEL=base
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:8000","http://localhost:3000"]
+    volumes:
+      - studio-storage:/app/backend/storage
+      - studio-db:/app/backend
+
+volumes:
+  studio-storage:
+  studio-db:
