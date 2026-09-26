@@ -24,6 +24,8 @@ import {
   Film,
   ArrowUp,
   ArrowDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useEditorStore } from '../../store/useEditorStore';
 import { Tooltip } from '../common/Tooltip';
@@ -103,6 +105,8 @@ export const Timeline: React.FC = () => {
     setIsTimelineFloating,
     isCompactTracks,
     setIsCompactTracks,
+    isTrackSideCollapsed,
+    setIsTrackSideCollapsed,
     selectedItemIds,
     setSelectedItemIds,
     toggleItemSelection,
@@ -379,6 +383,32 @@ export const Timeline: React.FC = () => {
         }`}>
           {/* Left Actions */}
           <div className="flex items-center space-x-1 sm:space-x-1.5 flex-shrink-0">
+            {/* Collapse / Expand Track Side Rail Toggle Button with Arrow */}
+            <Tooltip content={isTrackSideCollapsed ? "Expand Track Headers (Come Out)" : "Collapse Track Headers (Enter)"}>
+              <button
+                onClick={() => setIsTrackSideCollapsed(!isTrackSideCollapsed)}
+                className={`px-2 py-1 rounded text-xs font-semibold flex items-center space-x-1 transition-all border flex-shrink-0 ${
+                  isTrackSideCollapsed
+                    ? isLight
+                      ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-xs'
+                      : 'bg-[#FFD21F]/20 text-[#FFD21F] border-[#FFD21F]/40 shadow-xs'
+                    : isLight
+                    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'
+                    : 'bg-[#1F1F1F] hover:bg-[#282828] border-[#333333] text-gray-300 hover:text-white'
+                }`}
+                title={isTrackSideCollapsed ? "Expand Track Headers (Come out)" : "Collapse Track Headers (Enter in)"}
+              >
+                {isTrackSideCollapsed ? (
+                  <ChevronRight className="w-3.5 h-3.5 text-[#FFD21F]" />
+                ) : (
+                  <ChevronLeft className="w-3.5 h-3.5 text-[#FFD21F]" />
+                )}
+                <span className="hidden sm:inline">{isTrackSideCollapsed ? 'Tracks' : 'Tracks'}</span>
+              </button>
+            </Tooltip>
+
+            <div className={`h-4 w-[1px] mx-0.5 ${isLight ? 'bg-slate-300' : 'bg-[#333333]'}`} />
+
             {/* Split */}
             <Tooltip content="Split at playhead (S)">
               <button
@@ -570,132 +600,242 @@ export const Timeline: React.FC = () => {
         <div className={`timeline-workspace flex-1 flex overflow-hidden relative ${
           isLight ? 'bg-[#F8FAFC]' : 'bg-[#111111]'
         }`}>
-          {/* Left Track Headers Rail (CapCut style fixed control column) */}
-          <div className={`timeline-rail w-24 sm:w-28 flex-shrink-0 border-r flex flex-col select-none z-20 ${
+          {/* Left Track Headers Rail (Collapsible Control Column with Arrow Controls) */}
+          <div className={`timeline-rail flex-shrink-0 border-r flex flex-col select-none z-20 transition-all duration-200 ease-in-out relative group/rail ${
+            isTrackSideCollapsed ? 'w-10 sm:w-11' : 'w-40 sm:w-44'
+          } ${
             isLight ? 'bg-slate-50 border-[#E2E8F0] text-slate-700' : 'bg-[#141414] border-[#262626] text-gray-300'
           }`}>
-            {/* Top ruler corner spacer */}
-            <div className={`h-7 border-b flex items-center px-2 ${
+            {/* Quick floating arrow tab on rail border */}
+            <button
+              onClick={() => setIsTrackSideCollapsed(!isTrackSideCollapsed)}
+              className={`absolute -right-3 top-7 z-30 w-6 h-6 rounded-full border shadow-md flex items-center justify-center transition-all ${
+                isLight
+                  ? 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-black shadow-slate-300'
+                  : 'bg-[#202020] border-[#383838] text-gray-300 hover:bg-[#2A2A2A] hover:text-white shadow-black'
+              }`}
+              title={isTrackSideCollapsed ? "Expand Track Headers (Come Out) [Alt+T]" : "Collapse Track Headers (Enter) [Alt+T]"}
+            >
+              {isTrackSideCollapsed ? (
+                <ChevronRight className="w-3.5 h-3.5 text-[#FFD21F] hover:scale-110 transition-transform" />
+              ) : (
+                <ChevronLeft className="w-3.5 h-3.5 text-[#FFD21F] hover:scale-110 transition-transform" />
+              )}
+            </button>
+
+            {/* Top ruler corner spacer with Tracks Title and Arrow Toggle Button */}
+            <div className={`h-7 border-b flex items-center transition-all ${
+              isTrackSideCollapsed ? 'justify-center px-1' : 'justify-between px-2.5'
+            } ${
               isLight ? 'bg-slate-100 border-[#E2E8F0]' : 'bg-[#141414] border-[#262626]'
             }`}>
-              <span className={`text-[9.5px] font-mono font-bold tracking-wider uppercase ${isLight ? 'text-slate-500' : 'text-gray-500'}`}>Tracks</span>
+              {!isTrackSideCollapsed && (
+                <span className={`text-[10px] font-mono font-bold tracking-wider uppercase ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>
+                  Tracks
+                </span>
+              )}
+              <Tooltip content={isTrackSideCollapsed ? "Expand Track Headers (Come Out) [Alt+T]" : "Collapse Track Headers (Enter) [Alt+T]"}>
+                <button
+                  onClick={() => setIsTrackSideCollapsed(!isTrackSideCollapsed)}
+                  className={`p-1 rounded-md transition-all flex items-center justify-center ${
+                    isLight
+                      ? 'hover:bg-slate-200 text-slate-600 hover:text-black'
+                      : 'hover:bg-[#252525] text-gray-400 hover:text-white'
+                  }`}
+                  title={isTrackSideCollapsed ? "Expand Track Headers (Come Out)" : "Collapse Track Headers (Enter)"}
+                >
+                  {isTrackSideCollapsed ? (
+                    <ChevronRight className="w-4 h-4 text-[#FFD21F] hover:scale-110 transition-transform" />
+                  ) : (
+                    <ChevronLeft className="w-4 h-4 text-[#FFD21F] hover:scale-110 transition-transform" />
+                  )}
+                </button>
+              </Tooltip>
             </div>
 
             {/* 1. Rail: Overlay Video Track */}
-            <div className={`${trackHeightClass} border-b px-2 flex items-center justify-between ${
-              isLight ? 'border-[#E2E8F0]' : 'border-[#222222]'
-            }`}>
-              <div className="flex items-center space-x-1 min-w-0" title="Overlay Track (Text, PIP, Stickers, Images)">
-                <Layers className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
-                <span className={`text-[10px] font-semibold truncate ${isLight ? 'text-slate-800' : 'text-gray-300'}`}>Overlay</span>
+            {isTrackSideCollapsed ? (
+              <div
+                className={`${trackHeightClass} border-b flex items-center justify-center cursor-pointer transition-colors ${
+                  isLight ? 'border-[#E2E8F0] hover:bg-slate-100' : 'border-[#222222] hover:bg-[#1A1A1A]'
+                }`}
+                onClick={() => setIsTrackSideCollapsed(false)}
+                title="Overlay Track (Text, PIP, Stickers, Images) - Click to expand"
+              >
+                <div className="relative">
+                  <Layers className={`w-4 h-4 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                  {(lockedTracks['overlay'] || hiddenTracks['overlay'] || mutedTracks['overlay']) && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-1 ring-black" />
+                  )}
+                </div>
               </div>
-              <div className={`flex items-center space-x-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
-                <button
-                  onClick={() => toggleLock('overlay')}
-                  className={`p-1 rounded transition-colors ${lockedTracks['overlay'] ? (isLight ? 'text-amber-600' : 'text-[#FFD21F]') : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={lockedTracks['overlay'] ? 'Unlock PIP track' : 'Lock PIP track'}
-                >
-                  {lockedTracks['overlay'] ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
-                <button
-                  onClick={() => toggleHide('overlay')}
-                  className={`p-1 rounded transition-colors ${hiddenTracks['overlay'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={hiddenTracks['overlay'] ? 'Show PIP track' : 'Hide PIP track'}
-                >
-                  {hiddenTracks['overlay'] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
-                <button
-                  onClick={() => toggleMute('overlay')}
-                  className={`p-1 rounded transition-colors ${mutedTracks['overlay'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={mutedTracks['overlay'] ? 'Unmute PIP track' : 'Mute PIP track'}
-                >
-                  {mutedTracks['overlay'] ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
+            ) : (
+              <div className={`${trackHeightClass} border-b px-2.5 flex items-center justify-between ${
+                isLight ? 'border-[#E2E8F0]' : 'border-[#222222]'
+              }`}>
+                <div className="flex items-center space-x-1.5 min-w-0" title="Overlay Track (Text, PIP, Stickers, Images)">
+                  <Layers className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? 'text-emerald-600' : 'text-emerald-400'}`} />
+                  <span className={`text-[11px] font-bold truncate ${isLight ? 'text-slate-800' : 'text-gray-200'}`}>Overlays</span>
+                </div>
+                <div className={`flex items-center space-x-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
+                  <button
+                    onClick={() => toggleLock('overlay')}
+                    className={`p-1 rounded transition-colors ${lockedTracks['overlay'] ? (isLight ? 'text-amber-600' : 'text-[#FFD21F]') : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={lockedTracks['overlay'] ? 'Unlock PIP track' : 'Lock PIP track'}
+                  >
+                    {lockedTracks['overlay'] ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                  <button
+                    onClick={() => toggleHide('overlay')}
+                    className={`p-1 rounded transition-colors ${hiddenTracks['overlay'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={hiddenTracks['overlay'] ? 'Show PIP track' : 'Hide PIP track'}
+                  >
+                    {hiddenTracks['overlay'] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                  <button
+                    onClick={() => toggleMute('overlay')}
+                    className={`p-1 rounded transition-colors ${mutedTracks['overlay'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={mutedTracks['overlay'] ? 'Unmute PIP track' : 'Mute PIP track'}
+                  >
+                    {mutedTracks['overlay'] ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 2. Rail: Main Video Track */}
-            <div className={`${trackHeightClass} border-b px-2 flex items-center justify-between ${
-              isLight ? 'border-[#E2E8F0]' : 'border-[#222222]'
-            }`}>
-              <div className="flex items-center space-x-1 min-w-0" title="Main Video Track">
-                <Film className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? 'text-teal-600' : 'text-teal-400'}`} />
-                <span className={`text-[10px] font-semibold truncate ${isLight ? 'text-slate-800' : 'text-gray-300'}`}>Video</span>
+            {isTrackSideCollapsed ? (
+              <div
+                className={`${trackHeightClass} border-b flex items-center justify-center cursor-pointer transition-colors ${
+                  isLight ? 'border-[#E2E8F0] hover:bg-slate-100' : 'border-[#222222] hover:bg-[#1A1A1A]'
+                }`}
+                onClick={() => setIsTrackSideCollapsed(false)}
+                title="Main Video Track - Click to expand"
+              >
+                <div className="relative">
+                  <Film className={`w-4 h-4 ${isLight ? 'text-teal-600' : 'text-teal-400'}`} />
+                  {(lockedTracks['video'] || hiddenTracks['video'] || mutedTracks['video']) && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-1 ring-black" />
+                  )}
+                </div>
               </div>
-              <div className={`flex items-center space-x-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
-                <button
-                  onClick={() => toggleLock('video')}
-                  className={`p-1 rounded transition-colors ${lockedTracks['video'] ? (isLight ? 'text-amber-600' : 'text-[#FFD21F]') : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={lockedTracks['video'] ? 'Unlock video track' : 'Lock video track'}
-                >
-                  {lockedTracks['video'] ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
-                <button
-                  onClick={() => toggleHide('video')}
-                  className={`p-1 rounded transition-colors ${hiddenTracks['video'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={hiddenTracks['video'] ? 'Show video track' : 'Hide video track'}
-                >
-                  {hiddenTracks['video'] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
-                <button
-                  onClick={() => toggleMute('video')}
-                  className={`p-1 rounded transition-colors ${mutedTracks['video'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={mutedTracks['video'] ? 'Unmute video track' : 'Mute video track'}
-                >
-                  {mutedTracks['video'] ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
+            ) : (
+              <div className={`${trackHeightClass} border-b px-2.5 flex items-center justify-between ${
+                isLight ? 'border-[#E2E8F0]' : 'border-[#222222]'
+              }`}>
+                <div className="flex items-center space-x-1.5 min-w-0" title="Main Video Track">
+                  <Film className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? 'text-teal-600' : 'text-teal-400'}`} />
+                  <span className={`text-[11px] font-bold truncate ${isLight ? 'text-slate-800' : 'text-gray-200'}`}>Video</span>
+                </div>
+                <div className={`flex items-center space-x-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
+                  <button
+                    onClick={() => toggleLock('video')}
+                    className={`p-1 rounded transition-colors ${lockedTracks['video'] ? (isLight ? 'text-amber-600' : 'text-[#FFD21F]') : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={lockedTracks['video'] ? 'Unlock video track' : 'Lock video track'}
+                  >
+                    {lockedTracks['video'] ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                  <button
+                    onClick={() => toggleHide('video')}
+                    className={`p-1 rounded transition-colors ${hiddenTracks['video'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={hiddenTracks['video'] ? 'Show video track' : 'Hide video track'}
+                  >
+                    {hiddenTracks['video'] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                  <button
+                    onClick={() => toggleMute('video')}
+                    className={`p-1 rounded transition-colors ${mutedTracks['video'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={mutedTracks['video'] ? 'Unmute video track' : 'Mute video track'}
+                  >
+                    {mutedTracks['video'] ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 3. Rail: Captions Track */}
-            <div className={`h-9 sm:h-10 border-b px-2 flex items-center justify-between ${
-              isLight ? 'border-[#E2E8F0]' : 'border-[#222222]'
-            }`}>
-              <div className="flex items-center space-x-1 min-w-0" title="Captions & Text Track">
-                <Type className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
-                <span className={`text-[9.5px] font-semibold truncate ${isLight ? 'text-slate-800' : 'text-gray-300'}`}>Captions</span>
+            {isTrackSideCollapsed ? (
+              <div
+                className={`h-9 sm:h-10 border-b flex items-center justify-center cursor-pointer transition-colors ${
+                  isLight ? 'border-[#E2E8F0] hover:bg-slate-100' : 'border-[#222222] hover:bg-[#1A1A1A]'
+                }`}
+                onClick={() => setIsTrackSideCollapsed(false)}
+                title="Captions & Text Track - Click to expand"
+              >
+                <div className="relative">
+                  <Type className={`w-4 h-4 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
+                  {(lockedTracks['captions'] || hiddenTracks['captions']) && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-1 ring-black" />
+                  )}
+                </div>
               </div>
-              <div className={`flex items-center space-x-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
-                <button
-                  onClick={() => toggleLock('captions')}
-                  className={`p-1 rounded transition-colors ${lockedTracks['captions'] ? (isLight ? 'text-amber-600' : 'text-[#FFD21F]') : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={lockedTracks['captions'] ? 'Unlock captions' : 'Lock captions'}
-                >
-                  {lockedTracks['captions'] ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
-                <button
-                  onClick={() => toggleHide('captions')}
-                  className={`p-1 rounded transition-colors ${hiddenTracks['captions'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={hiddenTracks['captions'] ? 'Show captions' : 'Hide captions'}
-                >
-                  {hiddenTracks['captions'] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
+            ) : (
+              <div className={`h-9 sm:h-10 border-b px-2.5 flex items-center justify-between ${
+                isLight ? 'border-[#E2E8F0]' : 'border-[#222222]'
+              }`}>
+                <div className="flex items-center space-x-1.5 min-w-0" title="Captions & Text Track">
+                  <Type className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? 'text-amber-600' : 'text-amber-400'}`} />
+                  <span className={`text-[11px] font-bold truncate ${isLight ? 'text-slate-800' : 'text-gray-200'}`}>Captions</span>
+                </div>
+                <div className={`flex items-center space-x-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
+                  <button
+                    onClick={() => toggleLock('captions')}
+                    className={`p-1 rounded transition-colors ${lockedTracks['captions'] ? (isLight ? 'text-amber-600' : 'text-[#FFD21F]') : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={lockedTracks['captions'] ? 'Unlock captions' : 'Lock captions'}
+                  >
+                    {lockedTracks['captions'] ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                  <button
+                    onClick={() => toggleHide('captions')}
+                    className={`p-1 rounded transition-colors ${hiddenTracks['captions'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={hiddenTracks['captions'] ? 'Show captions' : 'Hide captions'}
+                  >
+                    {hiddenTracks['captions'] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 4. Rail: Audio Track */}
-            <div className="h-10 sm:h-11 px-2 flex items-center justify-between">
-              <div className="flex items-center space-x-1 min-w-0" title="Audio & Music Track">
-                <Music className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? 'text-orange-600' : 'text-orange-400'}`} />
-                <span className={`text-[9.5px] font-semibold truncate ${isLight ? 'text-slate-800' : 'text-gray-300'}`}>Audio</span>
+            {isTrackSideCollapsed ? (
+              <div
+                className={`h-10 sm:h-11 flex items-center justify-center cursor-pointer transition-colors ${
+                  isLight ? 'hover:bg-slate-100' : 'hover:bg-[#1A1A1A]'
+                }`}
+                onClick={() => setIsTrackSideCollapsed(false)}
+                title="Audio & Music Track - Click to expand"
+              >
+                <div className="relative">
+                  <Music className={`w-4 h-4 ${isLight ? 'text-orange-600' : 'text-orange-400'}`} />
+                  {(lockedTracks['audio'] || mutedTracks['audio']) && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-1 ring-black" />
+                  )}
+                </div>
               </div>
-              <div className={`flex items-center space-x-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
-                <button
-                  onClick={() => toggleLock('audio')}
-                  className={`p-1 rounded transition-colors ${lockedTracks['audio'] ? (isLight ? 'text-amber-600' : 'text-[#FFD21F]') : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={lockedTracks['audio'] ? 'Unlock audio track' : 'Lock audio track'}
-                >
-                  {lockedTracks['audio'] ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
-                <button
-                  onClick={() => toggleMute('audio')}
-                  className={`p-1 rounded transition-colors ${mutedTracks['audio'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
-                  title={mutedTracks['audio'] ? 'Unmute audio track' : 'Mute audio track'}
-                >
-                  {mutedTracks['audio'] ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3 opacity-60 hover:opacity-100" />}
-                </button>
+            ) : (
+              <div className="h-10 sm:h-11 px-2.5 flex items-center justify-between">
+                <div className="flex items-center space-x-1.5 min-w-0" title="Audio & Music Track">
+                  <Music className={`w-3.5 h-3.5 flex-shrink-0 ${isLight ? 'text-orange-600' : 'text-orange-400'}`} />
+                  <span className={`text-[11px] font-bold truncate ${isLight ? 'text-slate-800' : 'text-gray-200'}`}>Audio</span>
+                </div>
+                <div className={`flex items-center space-x-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
+                  <button
+                    onClick={() => toggleLock('audio')}
+                    className={`p-1 rounded transition-colors ${lockedTracks['audio'] ? (isLight ? 'text-amber-600' : 'text-[#FFD21F]') : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={lockedTracks['audio'] ? 'Unlock audio track' : 'Lock audio track'}
+                  >
+                    {lockedTracks['audio'] ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                  <button
+                    onClick={() => toggleMute('audio')}
+                    className={`p-1 rounded transition-colors ${mutedTracks['audio'] ? 'text-red-500' : (isLight ? 'hover:text-black' : 'hover:text-white')}`}
+                    title={mutedTracks['audio'] ? 'Unmute audio track' : 'Mute audio track'}
+                  >
+                    {mutedTracks['audio'] ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3 opacity-60 hover:opacity-100" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Scrollable Tracks Area (Horizontally scrollable only, NO VERTICAL SCROLLBAR) */}
