@@ -114,8 +114,12 @@ def verify_password(plain_password: str, stored_hash: Optional[str]) -> bool:
     """Verify plain password against stored hash (also supports legacy plain text gracefully)."""
     if not stored_hash:
         return False
-    # If already hashed
+    # If already hashed with current JWT_SECRET_KEY
     if hash_password(plain_password) == stored_hash:
+        return True
+    # Fallback to default key salt if JWT_SECRET_KEY was customized on Render
+    default_salt = "gbest-studio-jwt"[:16]
+    if hashlib.sha256(f"{default_salt}:{plain_password}".encode("utf-8")).hexdigest() == stored_hash:
         return True
     # Fallback to direct comparison if stored in plain text previously
     if plain_password == stored_hash:
