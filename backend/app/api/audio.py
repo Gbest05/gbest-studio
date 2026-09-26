@@ -1,6 +1,7 @@
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from app.config import settings
 from app.database import get_db
 from app.models.models import Asset
@@ -101,4 +102,16 @@ def extract_audio_from_video(video_id: str, db: Session = Depends(get_db)):
         duration=asset.duration,
         created_at=asset.created_at
     )
+
+@router.delete("/{asset_id}")
+def delete_audio(asset_id: str, db: Session = Depends(get_db)):
+    asset = db.scalar(select(Asset).where(Asset.id == asset_id))
+    if not asset:
+        raise HTTPException(status_code=404, detail="Audio asset not found")
+    if asset.path:
+        storage_service.delete_file(asset.path)
+    db.delete(asset)
+    db.commit()
+    return {"message": "Audio asset deleted successfully", "id": asset_id}
+
 

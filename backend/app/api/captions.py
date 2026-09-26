@@ -54,7 +54,8 @@ async def generate_captions(
         "success": True,
         "video_id": video.id,
         "segments": segments,
-        "count": len(segments)
+        "count": len(segments),
+        "message": "Captions generated successfully." if len(segments) > 0 else "No spoken speech detected in this video file."
     }
 
 @router.get("/{video_id}", response_model=list[CaptionResponse])

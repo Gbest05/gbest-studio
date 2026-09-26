@@ -15,12 +15,14 @@ interface EditorPageProps {
   projectId: string;
   onNavigateHome: () => void;
   onNavigateDashboard: () => void;
+  onNavigateAdmin?: () => void;
 }
 
 export const EditorPage: React.FC<EditorPageProps> = ({
   projectId,
   onNavigateHome,
   onNavigateDashboard,
+  onNavigateAdmin,
 }) => {
   const [showExportModal, setShowExportModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,11 +43,13 @@ export const EditorPage: React.FC<EditorPageProps> = ({
     selectedCaptionId,
     selectedStickerId,
     selectedImageId,
+    selectedVideoOverlayId,
     selectedAudioId,
     removeClip,
     removeCaption,
     removeSticker,
     removeImageOverlay,
+    removeVideoOverlay,
     removeAudioTrack,
     undo,
     redo,
@@ -55,8 +59,26 @@ export const EditorPage: React.FC<EditorPageProps> = ({
     setIsRightBarCollapsed,
     isMobileSidebarOpen,
     setIsMobileSidebarOpen,
+    theme,
+    projectName,
+    clips,
+    captions,
+    textOverlays,
+    stickerOverlays,
+    imageOverlays,
+    videoOverlays,
+    audioTracks,
+    aspectRatio,
+    coverImage,
+    filters,
+    rotate,
+    flipH,
+    flipV,
+    videoPosition,
+    videoScale,
   } = useEditorStore();
 
+  const isLight = theme === 'light';
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
@@ -67,9 +89,12 @@ export const EditorPage: React.FC<EditorPageProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const hasLoadedProject = useRef(false);
+
   // Set project ID & load from backend
   useEffect(() => {
     if (!projectId) return;
+    hasLoadedProject.current = false;
     setProjectId(projectId);
 
     const loadProject = async () => {
@@ -84,19 +109,23 @@ export const EditorPage: React.FC<EditorPageProps> = ({
             console.error('Failed to parse project_data:', e);
           }
         }
+        hasLoadedProject.current = true;
       } catch (err) {
         console.error('Failed to load project from server:', err);
+        // Even if server load fails, allow local autosave
+        hasLoadedProject.current = true;
       }
     };
 
     loadProject();
   }, [projectId]);
 
-  // Debounced Autosave to backend and localStorage
+  // Debounced Autosave to backend and localStorage on every project state change
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !hasLoadedProject.current) return;
 
     const timer = setTimeout(async () => {
+      if (!hasLoadedProject.current) return;
       try {
         setIsSaving(true);
         const state = getExportableState();
@@ -116,10 +145,31 @@ export const EditorPage: React.FC<EditorPageProps> = ({
       } finally {
         setIsSaving(false);
       }
-    }, 2500);
+    }, 1500);
 
     return () => clearTimeout(timer);
-  }, [getExportableState, projectId]);
+  }, [
+    projectId,
+    clips,
+    captions,
+    textOverlays,
+    stickerOverlays,
+    imageOverlays,
+    videoOverlays,
+    audioTracks,
+    aspectRatio,
+    projectName,
+    coverImage,
+    filters,
+    rotate,
+    flipH,
+    flipV,
+    videoPosition,
+    videoScale,
+    getExportableState,
+    setIsSaving,
+    setLastSaved,
+  ]);
 
   // Universal Keyboard Shortcuts
   useEffect(() => {
@@ -158,6 +208,9 @@ export const EditorPage: React.FC<EditorPageProps> = ({
         } else if (selectedImageId) {
           e.preventDefault();
           removeImageOverlay(selectedImageId);
+        } else if (selectedVideoOverlayId) {
+          e.preventDefault();
+          removeVideoOverlay(selectedVideoOverlayId);
         } else if (selectedAudioId) {
           e.preventDefault();
           removeAudioTrack(selectedAudioId);
@@ -188,6 +241,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({
     selectedCaptionId,
     selectedStickerId,
     selectedImageId,
+    selectedVideoOverlayId,
     selectedAudioId,
   ]);
 
@@ -235,7 +289,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#111111] overflow-hidden select-none">
+    <div className={`h-screen w-screen flex flex-col ${isLight ? 'bg-[#F4F6FB]' : 'bg-[#0E1015]'} overflow-hidden select-none`}>
       {/* Hidden File Input */}
       <input
         ref={fileInputRef}
@@ -251,19 +305,20 @@ export const EditorPage: React.FC<EditorPageProps> = ({
         onNavigateHome={onNavigateHome}
         onNavigateDashboard={onNavigateDashboard}
         onSaveProject={handleManualSave}
+        onNavigateAdmin={onNavigateAdmin}
       />
 
       {/* Main Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div className="flex-1 flex overflow-hidden relative pb-16 lg:pb-0">
         {/* Desktop Left Sidebar: Always visible on desktop screens */}
         <div className="hidden lg:flex h-full select-none">
           <SidebarTools />
         </div>
 
         {/* Center: Video Preview & Playback Controls & Timeline */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#0D0D0D]">
-          {/* Top Video Preview Stage */}
-          <div className="flex-1 min-h-0 relative overflow-hidden">
+        <div className={`flex-1 flex flex-col min-w-0 ${isLight ? 'bg-[#EBF0F7]' : 'bg-[#0A0C10]'}`}>
+          {/* Top Video Preview Stage (Responsive: compact height on mobile to prevent excessive background black space) */}
+          <div className="flex-none h-[32vh] sm:h-[36vh] lg:h-auto lg:flex-1 min-h-0 relative overflow-hidden">
             <VideoPreview onTriggerUpload={handleTriggerUpload} />
           </div>
 
@@ -281,7 +336,11 @@ export const EditorPage: React.FC<EditorPageProps> = ({
           ) : (
             <button
               onClick={() => setIsRightBarCollapsed(false)}
-              className="w-8 bg-[#161616] border-l border-[#242424] hover:bg-[#202020] text-gray-400 hover:text-white flex flex-col items-center justify-center space-y-2 cursor-pointer transition-colors"
+              className={`w-8 border-l flex flex-col items-center justify-center space-y-2 cursor-pointer transition-colors ${
+                isLight
+                  ? 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900'
+                  : 'bg-[#161616] border-[#242424] hover:bg-[#202020] text-gray-400 hover:text-white'
+              }`}
               title="Open Inspector"
             >
               <PanelRightOpen className="w-4 h-4 text-[#FFD21F]" />
@@ -293,8 +352,8 @@ export const EditorPage: React.FC<EditorPageProps> = ({
       {/* Floating Timeline (When Detached) */}
       {isTimelineFloating && <Timeline />}
 
-      {/* Mobile Dedicated Bottom Navigation & Dynamic Panels */}
-      <div className="flex lg:hidden flex-shrink-0 w-full z-30">
+      {/* Mobile Dedicated Bottom Navigation Bar - Fixed permanently at the bottom on mobile */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden shadow-2xl">
         <MobileToolbar />
       </div>
 
@@ -305,19 +364,25 @@ export const EditorPage: React.FC<EditorPageProps> = ({
             className="flex-1 bg-black/60 backdrop-blur-xs"
             onClick={() => setIsMobileSidebarOpen(false)}
           />
-          <div className="w-[88vw] max-w-sm h-full bg-[#141414] border-r border-[#2D2D2D] flex flex-col shadow-2xl animate-fade-in z-50">
-            <div className="p-3 border-b border-[#242424] flex items-center justify-between bg-[#111111]">
-              <span className="text-xs font-bold text-[#FFD21F] uppercase tracking-wider">
+          <div className={`w-[96vw] max-w-md sm:max-w-sm h-full border-r flex flex-col shadow-2xl animate-fade-in z-50 ${
+            isLight ? 'bg-white border-slate-200' : 'bg-[#141414] border-[#2D2D2D]'
+          }`}>
+            <div className={`p-3 border-b flex items-center justify-between ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#111111] border-[#242424]'
+            }`}>
+              <span className={`text-xs font-bold uppercase tracking-wider ${isLight ? 'text-amber-600' : 'text-[#FFD21F]'}`}>
                 Creative Tools & Panels
               </span>
               <button
                 onClick={() => setIsMobileSidebarOpen(false)}
-                className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-[#222222]"
+                className={`p-1 rounded-lg transition-colors ${
+                  isLight ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100' : 'text-gray-400 hover:text-white hover:bg-[#222222]'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-hidden w-full flex">
               <SidebarTools />
             </div>
           </div>

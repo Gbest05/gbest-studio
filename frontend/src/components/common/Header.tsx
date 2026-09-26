@@ -18,16 +18,21 @@ import {
   X,
   Sliders,
   Image as ImageIcon,
+  User as UserIcon,
+  Shield,
 } from 'lucide-react';
 import { useEditorStore } from '../../store/useEditorStore';
+import { useSiteConfigStore } from '../../store/useSiteConfigStore';
 import { Tooltip } from './Tooltip';
 import { AuthModal } from './AuthModal';
+import { ProfileModal } from './ProfileModal';
 
 interface HeaderProps {
   onOpenExport: () => void;
   onNavigateHome: () => void;
   onNavigateDashboard: () => void;
   onSaveProject: () => void;
+  onNavigateAdmin?: () => void;
 }
 
 const BG_COLOR_PRESETS = [
@@ -99,7 +104,9 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateHome,
   onNavigateDashboard,
   onSaveProject,
+  onNavigateAdmin,
 }) => {
+  const { config } = useSiteConfigStore();
   const {
     projectName,
     setProjectName,
@@ -112,6 +119,9 @@ export const Header: React.FC<HeaderProps> = ({
     currentUser,
     isAuthModalOpen,
     setIsAuthModalOpen,
+    openAuthModal,
+    isProfileModalOpen,
+    setIsProfileModalOpen,
     logout,
     isMobileSidebarOpen,
     setIsMobileSidebarOpen,
@@ -194,11 +204,9 @@ export const Header: React.FC<HeaderProps> = ({
     setHeaderBgOpacity(0.88);
   };
 
-  const isLight = theme === 'light'
-    ? (!headerBgImage || isColorLight(headerBgColor))
-    : (!headerBgImage && isColorLight(headerBgColor));
+  const isLight = theme === 'light';
 
-  const effectiveBgColor = theme === 'light' && (headerBgColor === '#141414' || headerBgColor === '#161616')
+  const effectiveBgColor = isLight
     ? '#FFFFFF'
     : (headerBgColor || '#141414');
 
@@ -207,8 +215,14 @@ export const Header: React.FC<HeaderProps> = ({
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={() => onSaveProject()}
+        onSuccess={() => {
+          onSaveProject();
+          if (onNavigateDashboard) {
+            onNavigateDashboard();
+          }
+        }}
       />
+      <ProfileModal />
 
       {/* Hidden file input for uploading custom header background image */}
       <input
@@ -269,10 +283,13 @@ export const Header: React.FC<HeaderProps> = ({
                   isLight ? 'text-gray-900' : 'text-white'
                 }`}
               >
-                GBEST
+                {config.brand_name || 'GBEST'}
               </span>
-              <span className="hidden sm:inline text-xs font-semibold tracking-widest text-[#FFD21F]">
-                STUDIO
+              <span
+                className="hidden sm:inline text-xs font-semibold tracking-widest"
+                style={{ color: config.primary_color || '#FFD21F' }}
+              >
+                {config.brand_tagline || 'STUDIO'}
               </span>
             </div>
           </button>
@@ -405,8 +422,8 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </Tooltip>
 
-          {/* Header Theme & Style Popover (Background Image & Color Editor) */}
-          <div className="relative flex-shrink-0" ref={headerStyleRef}>
+          {/* Header Theme & Style Popover (Background Image & Color Editor - Desktop only) */}
+          <div className="relative flex-shrink-0 hidden sm:block" ref={headerStyleRef}>
             <Tooltip content="Header Style & Background">
               <button
                 onClick={() => setShowHeaderStylePopover(!showHeaderStylePopover)}
@@ -426,7 +443,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Header Style Popover Modal */}
             {showHeaderStylePopover && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#181818] border border-[#2D2D2D] text-white rounded-2xl shadow-2xl p-4 z-50 text-xs space-y-4 animate-fade-in backdrop-blur-xl">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-[#181818] border border-[#2D2D2D] text-white rounded-2xl shadow-2xl p-4 z-50 text-xs space-y-4 animate-fade-in backdrop-blur-xl">
                 <div className="flex items-center justify-between pb-2 border-b border-[#2B2B2B]">
                   <div className="flex items-center space-x-2">
                     <Palette className="w-4 h-4 text-[#FFD21F]" />
@@ -680,17 +697,43 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* User Dropdown */}
               {showUserDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-[#181818] border border-[#2B2B2B] rounded-xl shadow-2xl p-2 z-50 text-xs space-y-1 animate-fade-in text-white">
-                  <div className="px-2.5 py-1.5 border-b border-[#252525] mb-1">
-                    <p className="font-semibold text-white truncate">{currentUser.name}</p>
-                    <p className="text-[10px] text-gray-400 truncate">{currentUser.email}</p>
+                <div className={`absolute right-0 mt-2 w-48 border rounded-xl shadow-2xl p-2 z-50 text-xs space-y-1 animate-fade-in ${
+                  isLight ? 'bg-white border-gray-200 text-gray-900 shadow-xl' : 'bg-[#181818] border-[#2B2B2B] text-white'
+                }`}>
+                  <div className={`px-2.5 py-1.5 border-b mb-1 ${isLight ? 'border-gray-200' : 'border-[#252525]'}`}>
+                    <p className={`font-semibold truncate ${isLight ? 'text-gray-900' : 'text-white'}`}>{currentUser.name}</p>
+                    <p className={`text-[10px] truncate ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>{currentUser.email}</p>
                   </div>
+                  {(currentUser.is_admin || currentUser.email?.toLowerCase() === 'princegbest555@gmail.com') && (
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        if (onNavigateAdmin) onNavigateAdmin();
+                        else window.location.href = '/admin';
+                      }}
+                      className={`w-full px-2.5 py-1.5 text-left rounded-lg flex items-center justify-between border transition-all ${
+                        isLight
+                          ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-900'
+                          : 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-[#FFD21F]'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Shield className="w-3.5 h-3.5 text-[#FFD21F]" />
+                        <span className="font-bold">Admin Dashboard</span>
+                      </div>
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-[#FFD21F] border border-amber-500/40">
+                        ADMIN
+                      </span>
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setShowUserDropdown(false);
                       onNavigateDashboard();
                     }}
-                    className="w-full px-2.5 py-1.5 text-left text-gray-300 hover:text-white hover:bg-[#222222] rounded-lg flex items-center space-x-2"
+                    className={`w-full px-2.5 py-1.5 text-left rounded-lg flex items-center space-x-2 ${
+                      isLight ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-100' : 'text-gray-300 hover:text-white hover:bg-[#222222]'
+                    }`}
                   >
                     <LayoutDashboard className="w-3.5 h-3.5 text-[#FFD21F]" />
                     <span>My Projects</span>
@@ -698,9 +741,21 @@ export const Header: React.FC<HeaderProps> = ({
                   <button
                     onClick={() => {
                       setShowUserDropdown(false);
+                      setIsProfileModalOpen(true);
+                    }}
+                    className={`w-full px-2.5 py-1.5 text-left rounded-lg flex items-center space-x-2 ${
+                      isLight ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-100' : 'text-gray-300 hover:text-white hover:bg-[#222222]'
+                    }`}
+                  >
+                    <UserIcon className="w-3.5 h-3.5 text-[#FFD21F]" />
+                    <span>Edit Profile</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
                       logout();
                     }}
-                    className="w-full px-2.5 py-1.5 text-left text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg flex items-center space-x-2"
+                    className="w-full px-2.5 py-1.5 text-left text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg flex items-center space-x-2"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>Sign Out</span>
@@ -711,26 +766,9 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="flex items-center space-x-1 px-2 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white transition-all active:scale-95 flex-shrink-0 shadow-sm"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white transition-all active:scale-95 flex-shrink-0 shadow-sm"
             >
-              <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
+              <UserIcon className="w-3.5 h-3.5 text-[#FFD21F]" />
               <span className="hidden sm:inline">Sign In</span>
             </button>
           )}

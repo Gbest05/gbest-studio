@@ -7,10 +7,11 @@ const TEXT_PRESETS = [
   {
     name: 'Bold Title',
     text: 'HEADLINE TITLE',
-    fontSize: 48,
+    fontSize: 52,
     weight: '900',
     color: '#FFFFFF',
     bg: 'transparent',
+    fontFamily: 'Bebas Neue',
     preset: 'title' as const,
   },
   {
@@ -20,7 +21,28 @@ const TEXT_PRESETS = [
     weight: '600',
     color: '#FFD21F',
     bg: 'rgba(0,0,0,0.8)',
+    fontFamily: 'Poppins',
     preset: 'lower_third' as const,
+  },
+  {
+    name: 'Viral Vlog',
+    text: 'CRAZY STORY TIME! 😱',
+    fontSize: 34,
+    weight: '700',
+    color: '#FFD21F',
+    bg: 'rgba(0,0,0,0.85)',
+    fontFamily: 'Permanent Marker',
+    preset: 'callout' as const,
+  },
+  {
+    name: 'Cinematic Serif',
+    text: 'CHAPTER ONE: THE BEGINNING',
+    fontSize: 28,
+    weight: '700',
+    color: '#FFFFFF',
+    bg: 'transparent',
+    fontFamily: 'Cinzel',
+    preset: 'title' as const,
   },
   {
     name: 'Social CTA',
@@ -29,15 +51,17 @@ const TEXT_PRESETS = [
     weight: '700',
     color: '#FFFFFF',
     bg: '#FF8A00',
+    fontFamily: 'Space Grotesk',
     preset: 'cta' as const,
   },
   {
-    name: 'Callout',
+    name: 'Impact Callout',
     text: 'MUST WATCH TIP!',
-    fontSize: 32,
+    fontSize: 36,
     weight: '800',
     color: '#111111',
     bg: '#FFD21F',
+    fontFamily: 'Anton',
     preset: 'callout' as const,
   },
 ];
@@ -62,7 +86,7 @@ export const TextPanel: React.FC = () => {
       end_time: Math.round(Math.min(duration || 10, currentTime + 3.5) * 10) / 10,
       x: 50,
       y: preset.preset === 'lower_third' ? 82 : preset.preset === 'cta' ? 88 : 45,
-      font_family: 'Inter',
+      font_family: preset.fontFamily || 'Inter',
       font_size: preset.fontSize,
       font_weight: preset.weight,
       color: preset.color,
@@ -73,15 +97,47 @@ export const TextPanel: React.FC = () => {
       preset: preset.preset,
     };
     addTextOverlay(newText);
+    setSelectedTextId(newText.id);
+  };
+
+  const handleAddCustomText = () => {
+    const newText: TextOverlay = {
+      id: `text_${Date.now()}`,
+      text: 'Add Heading Text',
+      start_time: Math.round(currentTime * 10) / 10,
+      end_time: Math.round(Math.min(duration || 10, currentTime + 3.5) * 10) / 10,
+      x: 50,
+      y: 50,
+      font_family: 'Inter',
+      font_size: 40,
+      font_weight: '700',
+      color: '#FFFFFF',
+      background_color: 'transparent',
+      shadow: true,
+      rotation: 0,
+      opacity: 1,
+      preset: 'title',
+    };
+    addTextOverlay(newText);
+    setSelectedTextId(newText.id);
   };
 
   const selectedOverlay = textOverlays.find((t) => t.id === selectedTextId);
 
   return (
     <div className="p-4 space-y-5 text-sm overflow-y-auto">
-      <div>
-        <h3 className="font-semibold text-white text-base">Text Overlays</h3>
-        <p className="text-xs text-[#A0A0A0]">Add titles, lower thirds, and call-to-actions.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-white text-base">Text Overlays</h3>
+          <p className="text-xs text-[#A0A0A0]">Add titles, lower thirds, and callouts to track.</p>
+        </div>
+        <button
+          onClick={handleAddCustomText}
+          className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-[#FFD21F] text-black font-semibold text-xs hover:bg-[#e6bd19] transition-colors shadow-sm cursor-pointer"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Add Text</span>
+        </button>
       </div>
 
       {/* Presets Grid */}
@@ -133,14 +189,30 @@ export const TextPanel: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <label className="text-[11px] text-[#888888]">Font Size ({selectedOverlay.font_size}px)</label>
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] text-[#888888]">Font Size</label>
+                <div className="flex items-center space-x-1">
+                  <input
+                    type="number"
+                    min="4"
+                    max="140"
+                    value={selectedOverlay.font_size}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 4;
+                      updateTextOverlay(selectedOverlay.id, { font_size: Math.max(4, Math.min(140, val)) });
+                    }}
+                    className="w-12 bg-[#121212] border border-[#333333] rounded px-1.5 py-0.5 text-[11px] text-[#FFD21F] font-mono font-bold text-center outline-none focus:border-[#FFD21F]"
+                  />
+                  <span className="text-[10px] text-[#666666]">px</span>
+                </div>
+              </div>
               <input
                 type="range"
-                min="16"
-                max="72"
+                min="4"
+                max="140"
                 value={selectedOverlay.font_size}
-                onChange={(e) => updateTextOverlay(selectedOverlay.id, { font_size: parseInt(e.target.value) })}
-                className="w-full accent-[#FFD21F]"
+                onChange={(e) => updateTextOverlay(selectedOverlay.id, { font_size: Math.max(4, parseInt(e.target.value) || 4) })}
+                className="w-full accent-[#FFD21F] cursor-pointer"
               />
             </div>
             <div className="space-y-1">

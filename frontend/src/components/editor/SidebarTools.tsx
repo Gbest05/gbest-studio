@@ -40,9 +40,9 @@ export const SidebarTools: React.FC = () => {
   ] as const;
 
   return (
-    <div className="flex h-full select-none">
+    <div className="flex h-full w-full select-none">
       {/* Icon Navigation Bar */}
-      <div className="w-16 bg-[#111111] border-r border-[#242424] flex flex-col items-center py-2.5 space-y-1.5 z-10 overflow-y-auto custom-scrollbar">
+      <div className="w-14 sm:w-16 flex-shrink-0 bg-[#111111] border-r border-[#242424] flex flex-col items-center py-2.5 space-y-1.5 z-10 overflow-y-auto custom-scrollbar">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTool === item.id;
@@ -54,7 +54,7 @@ export const SidebarTools: React.FC = () => {
                   setShowStyleSubPanel(false);
                   setActiveTool(item.id);
                 }}
-                className={`w-12 h-11 rounded-xl flex flex-col items-center justify-center space-y-0.5 transition-all ${
+                className={`w-11 sm:w-12 h-11 rounded-xl flex flex-col items-center justify-center space-y-0.5 transition-all ${
                   isActive
                     ? 'bg-[#1F1F1F] text-[#FFD21F] border border-[#FFD21F]/30 shadow-md shadow-amber-500/5'
                     : 'text-[#888888] hover:text-white hover:bg-[#181818]'
@@ -68,8 +68,8 @@ export const SidebarTools: React.FC = () => {
         })}
       </div>
 
-      {/* Expanded Active Tool Panel */}
-      <div className="w-72 sm:w-80 bg-[#161616] border-r border-[#242424] flex flex-col h-full overflow-hidden">
+      {/* Expanded Active Tool Panel (Dynamically flexes to fit screen width without clipping) */}
+      <div className="flex-1 min-w-0 w-72 sm:w-80 bg-[#161616] border-r border-[#242424] flex flex-col h-full overflow-hidden">
         {showStyleSubPanel ? (
           <CaptionStylePanel />
         ) : activeTool === 'media' ? (

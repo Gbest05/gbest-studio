@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.database import init_db
-from app.api import projects, videos, captions, audio, export, auth
+from app.api import projects, videos, captions, audio, export, auth, site_config
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,6 +41,7 @@ app.include_router(captions.router, prefix="/api")
 app.include_router(audio.router, prefix="/api")
 app.include_router(export.router, prefix="/api")
 app.include_router(auth.router, prefix="/api")
+app.include_router(site_config.router, prefix="/api")
 
 @app.get("/api/health")
 async def health_check():

@@ -29,17 +29,39 @@ import {
   Gem,
   Sun,
   Moon,
+  User as UserIcon,
+  LogOut,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useEditorStore } from '../store/useEditorStore';
+import { useSiteConfigStore } from '../store/useSiteConfigStore';
 import { AuthModal } from '../components/common/AuthModal';
+import { ProfileModal } from '../components/common/ProfileModal';
 
 interface LandingPageProps {
   onStartEditing: () => void;
   onGoToDashboard: () => void;
+  onNavigateAdmin?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoToDashboard }) => {
-  const { currentUser, isAuthModalOpen, setIsAuthModalOpen, theme, toggleTheme } = useEditorStore();
+export const LandingPage: React.FC<LandingPageProps> = ({
+  onStartEditing,
+  onGoToDashboard,
+  onNavigateAdmin,
+}) => {
+  const { config } = useSiteConfigStore();
+  const {
+    currentUser,
+    isAuthModalOpen,
+    setIsAuthModalOpen,
+    openAuthModal,
+    setIsProfileModalOpen,
+    theme,
+    toggleTheme,
+    logout,
+  } = useEditorStore();
+  const isLight = theme === 'light';
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   const [isPlaying3D, setIsPlaying3D] = useState(true);
   const [isMuted3D, setIsMuted3D] = useState(true);
@@ -80,40 +102,62 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
 
   return (
     <>
-      {/* Auth Modal */}
+      {/* Auth & Profile Modals */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onSuccess={onGoToDashboard}
       />
+      <ProfileModal />
 
-      <div className="min-h-screen bg-[#0D0D0D] text-white flex flex-col selection:bg-[#FFD21F] selection:text-black">
+      <div className={`min-h-screen flex flex-col selection:bg-[#FFD21F] selection:text-black transition-colors duration-200 ${
+        isLight ? 'bg-[#F8F9FA] text-gray-900' : 'bg-[#0D0D0D] text-white'
+      }`}>
         {/* Navigation Bar with Studio Background Image */}
         <header
-          className="h-16 border-b border-[#242424] px-4 sm:px-10 flex items-center justify-between sticky top-0 backdrop-blur-md z-30 shadow-lg relative overflow-hidden"
-          style={{
-            backgroundImage: `linear-gradient(90deg, rgba(13, 13, 13, 0.94) 0%, rgba(20, 20, 20, 0.88) 50%, rgba(13, 13, 13, 0.94) 100%), url('https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1600&q=80')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
+          className={`h-16 border-b px-3 sm:px-10 flex items-center justify-between sticky top-0 backdrop-blur-md z-30 shadow-lg relative overflow-hidden transition-colors ${
+            isLight
+              ? 'bg-white/95 border-gray-200 text-gray-900 shadow-sm'
+              : 'border-[#242424] text-white'
+          }`}
+          style={
+            isLight
+              ? {}
+              : {
+                  backgroundImage: `linear-gradient(90deg, rgba(13, 13, 13, 0.94) 0%, rgba(20, 20, 20, 0.88) 50%, rgba(13, 13, 13, 0.94) 100%), url('https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=1600&q=80')`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }
+          }
         >
           {/* Subtle Top Gold Ambient Accent Line */}
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#FFD21F]/50 to-transparent pointer-events-none" />
 
-          <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#1B1B1B] border border-[#333333] flex items-center justify-center shadow-md">
+          <div className="flex items-center space-x-2 sm:space-x-2.5 flex-shrink-0">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-md border flex-shrink-0 ${
+              isLight ? 'bg-amber-50 border-amber-200' : 'bg-[#1B1B1B] border-[#333333]'
+            }`}>
               <Film className="w-4 h-4 text-[#FFD21F]" />
             </div>
             <div className="flex items-baseline space-x-1.5">
-              <span className="font-extrabold text-xl tracking-wider text-white">GBEST</span>
-              <span className="text-xs font-semibold tracking-widest text-[#FFD21F]">STUDIO</span>
+              <span className={`font-extrabold text-lg sm:text-xl tracking-wider ${isLight ? 'text-gray-900' : 'text-white'}`}>
+                {config.brand_name || 'GBEST'}
+              </span>
+              <span
+                className="hidden xs:inline text-xs font-semibold tracking-widest"
+                style={{ color: config.primary_color || '#FFD21F' }}
+              >
+                {config.brand_tagline || 'STUDIO'}
+              </span>
             </div>
           </div>
 
           <div className="flex items-center space-x-2 sm:space-x-3">
             <button
               onClick={onGoToDashboard}
-              className="text-xs font-medium text-[#A0A0A0] hover:text-white transition-colors hidden sm:block"
+              className={`text-xs font-medium transition-colors hidden sm:block ${
+                isLight ? 'text-gray-600 hover:text-gray-900' : 'text-[#A0A0A0] hover:text-white'
+              }`}
             >
               My Projects
             </button>
@@ -121,64 +165,134 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
             {/* Dark/Light Mode Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all active:scale-95 group shadow-sm"
+              className={`p-2 rounded-xl border transition-all active:scale-95 group shadow-sm ${
+                isLight
+                  ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-800'
+                  : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+              }`}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-[#FFD21F] group-hover:rotate-45 transition-transform duration-300" />
               ) : (
-                <Moon className="w-4 h-4 text-indigo-400 group-hover:-rotate-12 transition-transform duration-300" />
+                <Moon className="w-4 h-4 text-indigo-600 group-hover:-rotate-12 transition-transform duration-300" />
               )}
             </button>
 
-            {/* Google Sign-in or User Avatar */}
+            {/* User Profile or Sign-in */}
             {currentUser ? (
-              <div className="flex items-center space-x-2 bg-[#1B1B1B] px-3 py-1.5 rounded-full border border-[#333333]">
-                {currentUser.avatar ? (
-                  <img
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
-                    className="w-5 h-5 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-[#FFD21F] text-black font-bold text-[10px] flex items-center justify-center">
-                    {currentUser.name.charAt(0)}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserDropdown(!showUserDropdown)}
+                  className={`flex items-center space-x-2 px-3 py-1.5 rounded-full border transition-colors focus:outline-none ${
+                    isLight
+                      ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-800'
+                      : 'bg-[#1B1B1B] hover:bg-[#252525] border-[#333333]'
+                  }`}
+                >
+                  {currentUser.avatar ? (
+                    <img
+                      src={currentUser.avatar}
+                      alt={currentUser.name}
+                      className="w-5 h-5 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-[#FFD21F] text-black font-bold text-[10px] flex items-center justify-center">
+                      {currentUser.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className={`hidden sm:inline text-xs font-semibold max-w-[100px] truncate ${
+                    isLight ? 'text-gray-800' : 'text-gray-200'
+                  }`}>
+                    {currentUser.name.split(' ')[0]}
+                  </span>
+                </button>
+
+                {showUserDropdown && (
+                  <div className={`absolute right-0 mt-2 w-48 max-w-[90vw] border rounded-xl shadow-2xl p-2 z-50 text-xs space-y-1 animate-fade-in ${
+                    isLight
+                      ? 'bg-white border-gray-200 text-gray-900 shadow-xl'
+                      : 'bg-[#181818] border-[#2B2B2B] text-white'
+                  }`}>
+                    <div className={`px-2.5 py-1.5 border-b mb-1 ${isLight ? 'border-gray-200' : 'border-[#252525]'}`}>
+                      <p className={`font-semibold truncate ${isLight ? 'text-gray-900' : 'text-white'}`}>{currentUser.name}</p>
+                      <p className={`text-[10px] truncate ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>{currentUser.email}</p>
+                    </div>
+                    {(currentUser.is_admin || currentUser.email?.toLowerCase() === 'princegbest555@gmail.com') && (
+                      <button
+                        onClick={() => {
+                          setShowUserDropdown(false);
+                          if (onNavigateAdmin) onNavigateAdmin();
+                          else window.location.href = '/admin';
+                        }}
+                        className={`w-full px-2.5 py-1.5 text-left rounded-lg flex items-center justify-between border transition-all ${
+                          isLight
+                            ? 'bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-900'
+                            : 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-[#FFD21F]'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <Shield className="w-3.5 h-3.5 text-[#FFD21F]" />
+                          <span className="font-bold">Admin Dashboard</span>
+                        </div>
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-[#FFD21F] border border-amber-500/40">
+                          ADMIN
+                        </span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        onGoToDashboard();
+                      }}
+                      className={`w-full px-2.5 py-1.5 text-left rounded-lg flex items-center space-x-2 ${
+                        isLight ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-100' : 'text-gray-300 hover:text-white hover:bg-[#222222]'
+                      }`}
+                    >
+                      <LayoutDashboard className="w-3.5 h-3.5 text-[#FFD21F]" />
+                      <span>My Projects</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        setIsProfileModalOpen(true);
+                      }}
+                      className={`w-full px-2.5 py-1.5 text-left rounded-lg flex items-center space-x-2 ${
+                        isLight ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-100' : 'text-gray-300 hover:text-white hover:bg-[#222222]'
+                      }`}
+                    >
+                      <UserIcon className="w-3.5 h-3.5 text-[#FFD21F]" />
+                      <span>Edit Profile</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowUserDropdown(false);
+                        logout();
+                      }}
+                      className="w-full px-2.5 py-1.5 text-left text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg flex items-center space-x-2"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
+                    </button>
                   </div>
                 )}
-                <span className="text-xs text-gray-200 font-semibold max-w-[100px] truncate">
-                  {currentUser.name.split(' ')[0]}
-                </span>
               </div>
             ) : (
               <button
-                onClick={() => setIsAuthModalOpen(true)}
-                className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold text-white transition-all shadow"
+                onClick={() => openAuthModal('login')}
+                className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-xl border text-xs font-semibold transition-all shadow active:scale-95 ${
+                  isLight
+                    ? 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-800'
+                    : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
+                }`}
               >
-                {/* Google G Logo */}
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                  />
-                </svg>
-                <span>Sign In with Google</span>
+                <UserIcon className="w-3.5 h-3.5 text-[#FFD21F]" />
+                <span>Sign In</span>
               </button>
             )}
 
             <button
-              onClick={onStartEditing}
+              onClick={onGoToDashboard}
               className="px-4 py-2 rounded-xl bg-[#FFD21F] hover:bg-[#E6BC15] text-black font-bold text-xs transition-all shadow-md shadow-amber-500/10 active:scale-95"
             >
               Open Studio
@@ -189,38 +303,47 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
         {/* HERO SECTION WITH 3D PERSPECTIVE VIDEO STAGE */}
         <section className="px-6 py-12 sm:py-20 max-w-6xl mx-auto text-center flex flex-col items-center">
           {/* Badge */}
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#1A1A1A] border border-[#2F2F2F] text-xs text-[#FFD21F] mb-6 shadow">
+          <div className={`inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs mb-6 shadow ${
+            isLight
+              ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700'
+              : 'bg-[#1A1A1A] border border-[#2F2F2F] text-[#FFD21F]'
+          }`}>
             <Sparkles className="w-3.5 h-3.5 text-[#FFD21F] animate-pulse" />
-            <span>Modern AI Video Editor & Auto-Transcription</span>
+            <span>{config.hero_badge || 'Modern AI Video Editor & Auto-Transcription'}</span>
           </div>
 
           {/* Large Headline */}
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6">
-            Create. Caption. <br className="hidden sm:inline" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-[#FFD21F] to-[#FF8A00]">
-              Edit. Export.
-            </span>
+          <h1 className={`text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.1] mb-6 ${
+            isLight ? 'text-gray-900' : 'text-white'
+          }`}>
+            {config.hero_title || 'Create Viral Videos in Seconds'}
           </h1>
 
           {/* Subheading */}
-          <p className="text-base sm:text-lg text-[#A0A0A0] max-w-2xl leading-relaxed mb-8">
-            Studio-grade video editor right in your browser. Real speech auto-captions with word highlight,
-            1-click audio extraction, dynamic overlays, and pro transitions.
+          <p className={`text-base sm:text-lg max-w-2xl leading-relaxed mb-8 ${
+            isLight ? 'text-gray-600' : 'text-[#A0A0A0]'
+          }`}>
+            {config.hero_subtitle || 'Studio-grade video editor right in your browser. Real speech auto-captions with word highlight, 1-click audio extraction, dynamic overlays, and pro transitions.'}
           </p>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4 mb-12 w-full sm:w-auto">
             <button
-              onClick={onStartEditing}
+              onClick={onGoToDashboard}
               className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#FFD21F] hover:bg-[#E6BC15] text-black font-bold text-sm flex items-center justify-center space-x-2 transition-all shadow-xl shadow-amber-500/20 active:scale-95"
+              style={{ backgroundColor: config.primary_color || '#FFD21F' }}
             >
-              <span>Launch Studio Editor</span>
+              <span>{config.hero_cta_text || 'Open Studio Editor'}</span>
               <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />
             </button>
 
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#181818] hover:bg-[#222222] border border-[#333333] text-white font-medium text-sm transition-colors flex items-center justify-center space-x-2"
+              className={`w-full sm:w-auto px-6 py-3.5 rounded-xl border font-medium text-sm transition-colors flex items-center justify-center space-x-2 ${
+                isLight
+                  ? 'bg-white hover:bg-gray-50 border-gray-300 text-gray-800 shadow-sm'
+                  : 'bg-[#181818] hover:bg-[#222222] border-[#333333] text-white'
+              }`}
             >
               <Shield className="w-4 h-4 text-[#FFD21F]" />
               <span>Sign Up with Gmail</span>
@@ -309,22 +432,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
                   className="relative aspect-video rounded-2xl bg-black overflow-hidden border border-[#222222] flex items-center justify-center group cursor-pointer shadow-inner"
                   onClick={togglePlay3D}
                 >
-                  <video
-                    ref={video3DRef}
-                    src="/api/media/uploads/video_7b6fa80606aa.mp4"
-                    autoPlay
-                    loop
-                    muted={isMuted3D}
-                    playsInline
-                    className="w-full h-full object-cover opacity-90 transition-opacity group-hover:opacity-100"
-                  />
+                  {config.hero_media_type === 'image' ? (
+                    <img
+                      src={config.hero_media_url || '/api/media/uploads/video_7b6fa80606aa.mp4'}
+                      alt="Hero Showcase"
+                      className="w-full h-full object-cover opacity-90 transition-opacity group-hover:opacity-100"
+                    />
+                  ) : (
+                    <video
+                      ref={video3DRef}
+                      src={config.hero_media_url || '/api/media/uploads/video_7b6fa80606aa.mp4'}
+                      autoPlay
+                      loop
+                      muted={isMuted3D}
+                      playsInline
+                      className="w-full h-full object-cover opacity-90 transition-opacity group-hover:opacity-100"
+                    />
+                  )}
 
                   {/* Dynamic 3D Word-by-Word Highlight Captions Overlay */}
                   <div className="absolute bottom-6 sm:bottom-12 left-0 right-0 text-center px-4 pointer-events-none z-20">
                     <div className="inline-block px-4 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 text-sm sm:text-base font-extrabold shadow-2xl">
                       <span>Create Viral Content with </span>
-                      <span className="text-[#FFD21F] underline decoration-wavy decoration-[#FFD21F]">
-                        GBEST STUDIO
+                      <span
+                        className="underline decoration-wavy"
+                        style={{
+                          color: config.primary_color || '#FFD21F',
+                          textDecorationColor: config.primary_color || '#FFD21F',
+                        }}
+                      >
+                        {config.brand_name || 'GBEST'} {config.brand_tagline || 'STUDIO'}
                       </span>
                     </div>
                   </div>
@@ -387,16 +524,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
         {/* ========================================================================= */}
         {/* SECTION 2: MULTI-FORMAT VIDEO SHOWCASE (9:16 Shorts, 16:9 Cinema, 1:1)   */}
         {/* ========================================================================= */}
-        <section className="px-6 py-16 max-w-6xl mx-auto border-t border-[#222222]">
+        <section className={`px-6 py-16 max-w-6xl mx-auto border-t transition-colors ${
+          isLight ? 'border-gray-200' : 'border-[#222222]'
+        }`}>
           <div className="text-center mb-12">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#1A1A1A] border border-[#2C2C2C] text-[11px] text-[#FFD21F] mb-3">
+            <div className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] mb-3 ${
+              isLight
+                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700'
+                : 'bg-[#1A1A1A] border border-[#2C2C2C] text-[#FFD21F]'
+            }`}>
               <Ratio className="w-3.5 h-3.5" />
               <span>Multi-Platform Video Formats</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-2">
+            <h2 className={`text-3xl sm:text-4xl font-extrabold mb-2 ${
+              isLight ? 'text-gray-900' : 'text-white'
+            }`}>
               Every Format. One Studio.
             </h2>
-            <p className="text-sm text-[#A0A0A0] max-w-lg mx-auto">
+            <p className={`text-sm max-w-lg mx-auto ${
+              isLight ? 'text-gray-600' : 'text-[#A0A0A0]'
+            }`}>
               Effortlessly toggle canvas ratios for TikTok, YouTube, Instagram Reels, and podcasts.
             </p>
 
@@ -407,6 +554,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
                 className={`flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                   activeFormatTab === '9:16'
                     ? 'bg-[#FFD21F] text-black shadow-lg shadow-amber-500/10'
+                    : isLight
+                    ? 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200 shadow-sm'
                     : 'bg-[#181818] text-gray-400 hover:text-white border border-[#2D2D2D]'
                 }`}
               >
@@ -419,6 +568,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
                 className={`flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                   activeFormatTab === '16:9'
                     ? 'bg-[#FFD21F] text-black shadow-lg shadow-amber-500/10'
+                    : isLight
+                    ? 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200 shadow-sm'
                     : 'bg-[#181818] text-gray-400 hover:text-white border border-[#2D2D2D]'
                 }`}
               >
@@ -431,6 +582,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
                 className={`flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                   activeFormatTab === '1:1'
                     ? 'bg-[#FFD21F] text-black shadow-lg shadow-amber-500/10'
+                    : isLight
+                    ? 'bg-white text-gray-600 hover:text-gray-900 border border-gray-200 shadow-sm'
                     : 'bg-[#181818] text-gray-400 hover:text-white border border-[#2D2D2D]'
                 }`}
               >
@@ -444,10 +597,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
             {/* Card 1: 9:16 Vertical Smartphone Mockup */}
             <div
-              className={`p-4 rounded-3xl bg-[#141414] border transition-all ${
+              className={`p-4 rounded-3xl border transition-all ${
                 activeFormatTab === '9:16'
-                  ? 'border-[#FFD21F] ring-1 ring-[#FFD21F]/30 shadow-2xl scale-102'
-                  : 'border-[#262626] opacity-80 hover:opacity-100'
+                  ? 'border-[#FFD21F] ring-1 ring-[#FFD21F]/30 shadow-2xl scale-102 ' + (isLight ? 'bg-white' : 'bg-[#141414]')
+                  : isLight
+                  ? 'bg-white border-gray-200 shadow-sm opacity-90 hover:opacity-100'
+                  : 'bg-[#141414] border-[#262626] opacity-80 hover:opacity-100'
               }`}
             >
               {/* Smartphone frame */}
@@ -488,17 +643,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
               </div>
 
               <div className="text-center mt-3">
-                <span className="text-xs font-bold text-white">9:16 Vertical Video</span>
-                <p className="text-[10px] text-gray-400">TikTok, Instagram Reels, YouTube Shorts</p>
+                <span className={`text-xs font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>9:16 Vertical Video</span>
+                <p className={`text-[10px] ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>TikTok, Instagram Reels, YouTube Shorts</p>
               </div>
             </div>
 
             {/* Card 2: 16:9 YouTube Ultra HD Cinema Display */}
             <div
-              className={`p-4 rounded-3xl bg-[#141414] border transition-all ${
+              className={`p-4 rounded-3xl border transition-all ${
                 activeFormatTab === '16:9'
-                  ? 'border-[#FFD21F] ring-1 ring-[#FFD21F]/30 shadow-2xl scale-102'
-                  : 'border-[#262626] opacity-80 hover:opacity-100'
+                  ? 'border-[#FFD21F] ring-1 ring-[#FFD21F]/30 shadow-2xl scale-102 ' + (isLight ? 'bg-white' : 'bg-[#141414]')
+                  : isLight
+                  ? 'bg-white border-gray-200 shadow-sm opacity-90 hover:opacity-100'
+                  : 'bg-[#141414] border-[#262626] opacity-80 hover:opacity-100'
               }`}
             >
               <div className="aspect-video w-full rounded-2xl bg-black border-2 border-[#2A2A2A] shadow-2xl overflow-hidden relative p-3 flex flex-col justify-between">
@@ -532,17 +689,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
               </div>
 
               <div className="text-center mt-3">
-                <span className="text-xs font-bold text-white">16:9 Cinema Widescreen</span>
-                <p className="text-[10px] text-gray-400">YouTube, Podcasts, Film & TV</p>
+                <span className={`text-xs font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>16:9 Cinema Widescreen</span>
+                <p className={`text-[10px] ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>YouTube, Podcasts, Film & TV</p>
               </div>
             </div>
 
             {/* Card 3: 1:1 Square Motion Social Post */}
             <div
-              className={`p-4 rounded-3xl bg-[#141414] border transition-all ${
+              className={`p-4 rounded-3xl border transition-all ${
                 activeFormatTab === '1:1'
-                  ? 'border-[#FFD21F] ring-1 ring-[#FFD21F]/30 shadow-2xl scale-102'
-                  : 'border-[#262626] opacity-80 hover:opacity-100'
+                  ? 'border-[#FFD21F] ring-1 ring-[#FFD21F]/30 shadow-2xl scale-102 ' + (isLight ? 'bg-white' : 'bg-[#141414]')
+                  : isLight
+                  ? 'bg-white border-gray-200 shadow-sm opacity-90 hover:opacity-100'
+                  : 'bg-[#141414] border-[#262626] opacity-80 hover:opacity-100'
               }`}
             >
               <div className="aspect-square w-full max-w-[240px] mx-auto rounded-2xl bg-black border-2 border-[#2A2A2A] shadow-2xl overflow-hidden relative p-3 flex flex-col justify-between">
@@ -568,8 +727,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
               </div>
 
               <div className="text-center mt-3">
-                <span className="text-xs font-bold text-white">1:1 Square Feed</span>
-                <p className="text-[10px] text-gray-400">Instagram Feed, LinkedIn, Twitter</p>
+                <span className={`text-xs font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>1:1 Square Feed</span>
+                <p className={`text-[10px] ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>Instagram Feed, LinkedIn, Twitter</p>
               </div>
             </div>
           </div>
@@ -578,16 +737,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
         {/* ========================================================================= */}
         {/* SECTION 3: BEFORE & AFTER CREATIVE VIDEO / COLOR GRADING SLIDER           */}
         {/* ========================================================================= */}
-        <section className="px-6 py-16 max-w-6xl mx-auto border-t border-[#222222]">
+        <section className={`px-6 py-16 max-w-6xl mx-auto border-t transition-colors ${
+          isLight ? 'border-gray-200' : 'border-[#222222]'
+        }`}>
           <div className="text-center mb-10">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#1A1A1A] border border-[#2C2C2C] text-[11px] text-[#FFD21F] mb-3">
+            <div className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] mb-3 ${
+              isLight
+                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700'
+                : 'bg-[#1A1A1A] border border-[#2C2C2C] text-[#FFD21F]'
+            }`}>
               <Sliders className="w-3.5 h-3.5" />
               <span>Color Science & AI Subtitles</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-2">
+            <h2 className={`text-3xl sm:text-4xl font-extrabold mb-2 ${
+              isLight ? 'text-gray-900' : 'text-white'
+            }`}>
               Transform Flat Footage in 1 Click
             </h2>
-            <p className="text-sm text-[#A0A0A0] max-w-lg mx-auto">
+            <p className={`text-sm max-w-lg mx-auto ${
+              isLight ? 'text-gray-600' : 'text-[#A0A0A0]'
+            }`}>
               Drag the interactive slider below to see how GBEST Studio elevates raw camera footage with pro color presets and auto-captions.
             </p>
           </div>
@@ -654,9 +823,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
               title="Slide to compare"
             />
           </div>
-          <div className="flex justify-between text-xs text-gray-500 font-mono mt-2 max-w-4xl mx-auto px-2">
+          <div className="flex justify-between text-xs font-mono mt-2 max-w-4xl mx-auto px-2 text-gray-500">
             <span>← Raw Video Input</span>
-            <span className="text-gray-400">Drag Slider to Compare</span>
+            <span className={isLight ? 'text-gray-700 font-semibold' : 'text-gray-400'}>Drag Slider to Compare</span>
             <span>Studio Master Output →</span>
           </div>
         </section>
@@ -664,16 +833,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
         {/* ========================================================================= */}
         {/* SECTION 4: DESIGN ASSETS & STICKERS SHOWCASE                             */}
         {/* ========================================================================= */}
-        <section className="px-6 py-16 max-w-6xl mx-auto border-t border-[#222222]">
+        <section className={`px-6 py-16 max-w-6xl mx-auto border-t transition-colors ${
+          isLight ? 'border-gray-200' : 'border-[#222222]'
+        }`}>
           <div className="text-center mb-12">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#1A1A1A] border border-[#2C2C2C] text-[11px] text-[#FFD21F] mb-3">
+            <div className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-[11px] mb-3 ${
+              isLight
+                ? 'bg-amber-500/10 border border-amber-500/30 text-amber-700'
+                : 'bg-[#1A1A1A] border border-[#2C2C2C] text-[#FFD21F]'
+            }`}>
               <Smile className="w-3.5 h-3.5" />
               <span>Creative Asset Library</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-2">
+            <h2 className={`text-3xl sm:text-4xl font-extrabold mb-2 ${
+              isLight ? 'text-gray-900' : 'text-white'
+            }`}>
               Hundreds of Motion Stickers & Effects
             </h2>
-            <p className="text-sm text-[#A0A0A0] max-w-lg mx-auto">
+            <p className={`text-sm max-w-lg mx-auto ${
+              isLight ? 'text-gray-600' : 'text-[#A0A0A0]'
+            }`}>
               Add social popups, animated emojis, neon lower-thirds, and cinematic sound FX instantly.
             </p>
           </div>
@@ -691,23 +870,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
               return (
                 <div
                   key={idx}
-                  className="p-4 rounded-2xl bg-[#141414] border border-[#262626] hover:border-[#FFD21F] text-center transition-all group hover:-translate-y-1 shadow-lg flex flex-col items-center justify-center"
+                  className={`p-4 rounded-2xl border text-center transition-all group hover:-translate-y-1 shadow-sm hover:shadow-md flex flex-col items-center justify-center ${
+                    isLight
+                      ? 'bg-white border-gray-200 hover:border-[#FFD21F]'
+                      : 'bg-[#141414] border-[#262626] hover:border-[#FFD21F]'
+                  }`}
                 >
                   <div className={`w-12 h-12 rounded-2xl ${sticker.bg} border flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-200 shadow-md`}>
                     <Icon className="w-6 h-6" style={{ color: sticker.color }} />
                   </div>
-                  <h4 className="text-xs font-bold text-white truncate">{sticker.label}</h4>
-                  <span className="text-[9px] text-[#FFD21F] font-mono block mt-1">{sticker.tag}</span>
+                  <h4 className={`text-xs font-bold truncate ${isLight ? 'text-gray-900' : 'text-white'}`}>{sticker.label}</h4>
+                  <span className="text-[9px] text-[#FFD21F] font-mono block mt-1 font-semibold">{sticker.tag}</span>
                 </div>
               );
             })}
           </div>
 
           {/* Subtitle Style Presets Preview Strip */}
-          <div className="mt-8 p-5 rounded-2xl bg-[#141414] border border-[#262626] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className={`mt-8 p-5 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${
+            isLight
+              ? 'bg-white border-gray-200 shadow-sm'
+              : 'bg-[#141414] border-[#262626]'
+          }`}>
             <div className="text-left">
-              <span className="text-xs font-bold text-white block">Kinetic Subtitle Presets</span>
-              <span className="text-[11px] text-gray-400">
+              <span className={`text-xs font-bold block ${isLight ? 'text-gray-900' : 'text-white'}`}>Kinetic Subtitle Presets</span>
+              <span className={`text-[11px] ${isLight ? 'text-gray-600' : 'text-gray-400'}`}>
                 Word-by-word active highlight, neon strokes, and TikTok bold styles.
               </span>
             </div>
@@ -731,114 +918,132 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartEditing, onGoTo
         {/* ========================================================================= */}
         {/* SECTION 5: CORE FEATURES GRID                                            */}
         {/* ========================================================================= */}
-        <section id="features" className="px-6 py-16 max-w-6xl mx-auto border-t border-[#222222]">
+        <section id="features" className={`px-6 py-16 max-w-6xl mx-auto border-t transition-colors ${
+          isLight ? 'border-gray-200' : 'border-[#222222]'
+        }`}>
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">
+            <h2 className={`text-3xl sm:text-4xl font-extrabold mb-3 ${
+              isLight ? 'text-gray-900' : 'text-white'
+            }`}>
               Engineered for High-Velocity Creators
             </h2>
-            <p className="text-sm text-[#A0A0A0] max-w-xl mx-auto">
+            <p className={`text-sm max-w-xl mx-auto ${
+              isLight ? 'text-gray-600' : 'text-[#A0A0A0]'
+            }`}>
               Everything you need to produce viral short-form and high-impact long-form video content.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1 */}
-            <div className="p-6 rounded-2xl bg-[#141414] border border-[#242424] hover:border-[#FFD21F]/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-[#1E1E1E] border border-[#333333] flex items-center justify-center mb-4 group-hover:border-[#FFD21F] transition-colors">
-                <Sparkles className="w-6 h-6 text-[#FFD21F]" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Exact AI Speech Captions</h3>
-              <p className="text-xs text-[#A0A0A0] leading-relaxed">
-                Transcribe speech accurately into synchronized animated subtitles with word-by-word highlight effects.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="p-6 rounded-2xl bg-[#141414] border border-[#242424] hover:border-[#FFD21F]/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-[#1E1E1E] border border-[#333333] flex items-center justify-center mb-4 group-hover:border-[#FFD21F] transition-colors">
-                <Music className="w-6 h-6 text-[#FF8A00]" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Convert Video to Audio</h3>
-              <p className="text-xs text-[#A0A0A0] leading-relaxed">
-                1-click audio extraction isolates crystal-clear MP3 tracks onto the timeline with independent volume mixing.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="p-6 rounded-2xl bg-[#141414] border border-[#242424] hover:border-[#FFD21F]/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-[#1E1E1E] border border-[#333333] flex items-center justify-center mb-4 group-hover:border-[#FFD21F] transition-colors">
-                <Sliders className="w-6 h-6 text-[#FFD21F]" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Pro Color Adjustments</h3>
-              <p className="text-xs text-[#A0A0A0] leading-relaxed">
-                Dial in Exposure, Saturation, Temperature, Tint, Vignette, Letterbox, and cinematic LUT presets.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="p-6 rounded-2xl bg-[#141414] border border-[#242424] hover:border-[#FFD21F]/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-[#1E1E1E] border border-[#333333] flex items-center justify-center mb-4 group-hover:border-[#FFD21F] transition-colors">
-                <Smile className="w-6 h-6 text-[#FFD21F]" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Animated Stickers & Images</h3>
-              <p className="text-xs text-[#A0A0A0] leading-relaxed">
-                Add trending social badges, emojis, and logo overlays with bounce, pulse, spin, and float animations.
-              </p>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="p-6 rounded-2xl bg-[#141414] border border-[#242424] hover:border-[#FFD21F]/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-[#1E1E1E] border border-[#333333] flex items-center justify-center mb-4 group-hover:border-[#FFD21F] transition-colors">
-                <Shield className="w-6 h-6 text-[#FF8A00]" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Google Cloud Auto-Save</h3>
-              <p className="text-xs text-[#A0A0A0] leading-relaxed">
-                Sign in with Google to sync your projects securely and resume editing on any device seamlessly.
-              </p>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="p-6 rounded-2xl bg-[#141414] border border-[#242424] hover:border-[#FFD21F]/50 transition-all group">
-              <div className="w-12 h-12 rounded-xl bg-[#1E1E1E] border border-[#333333] flex items-center justify-center mb-4 group-hover:border-[#FFD21F] transition-colors">
-                <Download className="w-6 h-6 text-[#FFD21F]" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Lightning Fast Export</h3>
-              <p className="text-xs text-[#A0A0A0] leading-relaxed">
-                Hardware-accelerated FFmpeg export pipeline produces crisp MP4 files optimized for YouTube, TikTok, and Instagram.
-              </p>
-            </div>
+            {[
+              {
+                icon: Sparkles,
+                color: 'text-[#FFD21F]',
+                title: 'Exact AI Speech Captions',
+                desc: 'Transcribe speech accurately into synchronized animated subtitles with word-by-word highlight effects.'
+              },
+              {
+                icon: Music,
+                color: 'text-[#FF8A00]',
+                title: 'Convert Video to Audio',
+                desc: '1-click audio extraction isolates crystal-clear MP3 tracks onto the timeline with independent volume mixing.'
+              },
+              {
+                icon: Sliders,
+                color: 'text-[#FFD21F]',
+                title: 'Pro Color Adjustments',
+                desc: 'Dial in Exposure, Saturation, Temperature, Tint, Vignette, Letterbox, and cinematic LUT presets.'
+              },
+              {
+                icon: Smile,
+                color: 'text-[#FFD21F]',
+                title: 'Animated Stickers & Images',
+                desc: 'Add trending social badges, emojis, and logo overlays with bounce, pulse, spin, and float animations.'
+              },
+              {
+                icon: Shield,
+                color: 'text-[#FF8A00]',
+                title: 'Private Workspace & Cloud Sync',
+                desc: 'Create your account to sync your projects securely and keep your editing workspace completely private and isolated.'
+              },
+              {
+                icon: Download,
+                color: 'text-[#FFD21F]',
+                title: 'Lightning Fast Export',
+                desc: 'Hardware-accelerated FFmpeg export pipeline produces crisp MP4 files optimized for YouTube, TikTok, and Instagram.'
+              },
+            ].map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={i}
+                  className={`p-6 rounded-2xl border transition-all group shadow-sm hover:shadow-md ${
+                    isLight
+                      ? 'bg-white border-gray-200 hover:border-[#FFD21F]'
+                      : 'bg-[#141414] border-[#242424] hover:border-[#FFD21F]/50'
+                  }`}
+                >
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors border ${
+                    isLight
+                      ? 'bg-gray-50 border-gray-200 group-hover:border-[#FFD21F]'
+                      : 'bg-[#1E1E1E] border-[#333333] group-hover:border-[#FFD21F]'
+                  }`}>
+                    <Icon className={`w-6 h-6 ${f.color}`} />
+                  </div>
+                  <h3 className={`text-lg font-bold mb-2 ${isLight ? 'text-gray-900' : 'text-white'}`}>{f.title}</h3>
+                  <p className={`text-xs leading-relaxed ${isLight ? 'text-gray-600' : 'text-[#A0A0A0]'}`}>
+                    {f.desc}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         {/* CTA BANNER */}
         <section className="px-6 py-16 max-w-5xl mx-auto text-center">
-          <div className="p-10 rounded-3xl bg-gradient-to-r from-[#1B1B1B] via-[#241F14] to-[#1B1B1B] border border-[#333333] shadow-2xl">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-3">
-              Ready to Create High-Performing Videos?
+          <div className={`p-10 rounded-3xl border shadow-2xl transition-colors ${
+            isLight
+              ? 'bg-gradient-to-r from-gray-50 via-amber-50/60 to-gray-50 border-gray-300'
+              : 'bg-gradient-to-r from-[#1B1B1B] via-[#241F14] to-[#1B1B1B] border-[#333333]'
+          }`}>
+            <h2 className={`text-3xl sm:text-4xl font-extrabold mb-3 ${
+              isLight ? 'text-gray-900' : 'text-white'
+            }`}>
+              {config.cta_banner_title || 'Ready to Create High-Performing Videos?'}
             </h2>
-            <p className="text-sm text-gray-300 max-w-lg mx-auto mb-8">
-              No software installation required. Run GBEST Studio directly in your web browser.
+            <p className={`text-sm max-w-lg mx-auto mb-8 ${
+              isLight ? 'text-gray-600' : 'text-gray-300'
+            }`}>
+              {config.cta_banner_subtitle || 'No software installation required. Run GBEST Studio directly in your web browser.'}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
               <button
-                onClick={onStartEditing}
+                onClick={onGoToDashboard}
                 className="px-8 py-3.5 rounded-xl bg-[#FFD21F] hover:bg-[#E6BC15] text-black font-bold text-sm shadow-xl shadow-amber-500/20 active:scale-95"
+                style={{ backgroundColor: config.primary_color || '#FFD21F' }}
               >
-                Open Studio Editor Now
+                {config.cta_button_text || 'Open Studio Editor Now'}
               </button>
               <button
-                onClick={() => setIsAuthModalOpen(true)}
-                className="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-sm"
+                onClick={() => openAuthModal('signup')}
+                className={`px-6 py-3.5 rounded-xl border font-medium text-sm transition-colors ${
+                  isLight
+                    ? 'bg-white hover:bg-gray-100 border-gray-300 text-gray-800 shadow-sm'
+                    : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
+                }`}
               >
-                Connect with Gmail
+                Sign Up with Gmail / Email
               </button>
             </div>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="mt-auto border-t border-[#222222] py-8 px-6 text-center text-xs text-[#666666]">
-          <p>© 2026 GBEST STUDIO. All rights reserved. Professional Web Video Editor.</p>
+        <footer className={`mt-auto border-t py-8 px-6 text-center text-xs transition-colors ${
+          isLight ? 'border-gray-200 text-gray-500 bg-white' : 'border-[#222222] text-[#666666]'
+        }`}>
+          <p>{config.footer_copyright || '© 2026 GBEST STUDIO. All rights reserved. Professional Web Video Editor.'}</p>
         </footer>
       </div>
     </>

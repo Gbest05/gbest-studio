@@ -23,24 +23,31 @@ export const EffectsPanel: React.FC = () => {
     setFlipH,
     flipV,
     setFlipV,
+    theme,
   } = useEditorStore();
+
+  const isLight = theme === 'light';
 
   return (
     <div className="p-4 space-y-5 text-sm overflow-y-auto">
       <div>
-        <h3 className="font-semibold text-white text-base">Video Effects & Filters</h3>
-        <p className="text-xs text-[#A0A0A0]">Adjust color grade, exposure, blur, and orientation.</p>
+        <h3 className={`font-semibold text-base ${isLight ? 'text-slate-800' : 'text-white'}`}>Video Effects & Filters</h3>
+        <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-[#A0A0A0]'}`}>Adjust color grade, exposure, blur, and orientation.</p>
       </div>
 
       {/* Rotation & Flip Controls */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold uppercase tracking-wider text-[#888888]">
+        <label className={`text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-500' : 'text-[#888888]'}`}>
           Transform & Orientation
         </label>
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => setRotate(rotate + 90)}
-            className="p-2.5 bg-[#181818] hover:bg-[#222222] border border-[#2D2D2D] rounded-lg flex flex-col items-center justify-center space-y-1 text-xs text-[#A0A0A0] hover:text-white transition-colors"
+            className={`p-2.5 rounded-lg flex flex-col items-center justify-center space-y-1 text-xs border transition-colors ${
+              isLight
+                ? 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700 hover:text-black'
+                : 'bg-[#181818] hover:bg-[#222222] border-[#2D2D2D] text-[#A0A0A0] hover:text-white'
+            }`}
           >
             <RotateCw className="w-4 h-4 text-[#FFD21F]" />
             <span>Rotate 90°</span>
@@ -50,7 +57,11 @@ export const EffectsPanel: React.FC = () => {
             onClick={() => setFlipH(!flipH)}
             className={`p-2.5 border rounded-lg flex flex-col items-center justify-center space-y-1 text-xs transition-colors ${
               flipH
-                ? 'bg-[#222222] border-[#FFD21F] text-[#FFD21F]'
+                ? isLight
+                  ? 'bg-amber-50 border-amber-400 text-amber-700 font-semibold'
+                  : 'bg-[#222222] border-[#FFD21F] text-[#FFD21F]'
+                : isLight
+                ? 'bg-slate-50 border-slate-200 text-slate-700 hover:text-black hover:bg-slate-100'
                 : 'bg-[#181818] border-[#2D2D2D] text-[#A0A0A0] hover:text-white'
             }`}
           >
@@ -62,7 +73,11 @@ export const EffectsPanel: React.FC = () => {
             onClick={() => setFlipV(!flipV)}
             className={`p-2.5 border rounded-lg flex flex-col items-center justify-center space-y-1 text-xs transition-colors ${
               flipV
-                ? 'bg-[#222222] border-[#FFD21F] text-[#FFD21F]'
+                ? isLight
+                  ? 'bg-amber-50 border-amber-400 text-amber-700 font-semibold'
+                  : 'bg-[#222222] border-[#FFD21F] text-[#FFD21F]'
+                : isLight
+                ? 'bg-slate-50 border-slate-200 text-slate-700 hover:text-black hover:bg-slate-100'
                 : 'bg-[#181818] border-[#2D2D2D] text-[#A0A0A0] hover:text-white'
             }`}
           >
@@ -74,7 +89,7 @@ export const EffectsPanel: React.FC = () => {
 
       {/* Color Filter Presets */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold uppercase tracking-wider text-[#888888] flex items-center space-x-1.5">
+        <label className={`text-xs font-semibold uppercase tracking-wider flex items-center space-x-1.5 ${isLight ? 'text-slate-500' : 'text-[#888888]'}`}>
           <Wand2 className="w-3.5 h-3.5 text-[#FFD21F]" />
           <span>Color Presets</span>
         </label>
@@ -87,12 +102,16 @@ export const EffectsPanel: React.FC = () => {
                 onClick={() => setFilters({ preset: p.id })}
                 className={`p-2.5 rounded-lg border text-left transition-all ${
                   isActive
-                    ? 'bg-[#1F1F1F] border-[#FFD21F] ring-1 ring-[#FFD21F]'
+                    ? isLight
+                      ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400 text-amber-950'
+                      : 'bg-[#1F1F1F] border-[#FFD21F] ring-1 ring-[#FFD21F]'
+                    : isLight
+                    ? 'bg-slate-50 border-slate-200 hover:border-slate-300'
                     : 'bg-[#161616] border-[#2B2B2B] hover:border-[#383838]'
                 }`}
               >
-                <div className="text-xs font-medium text-white">{p.name}</div>
-                <div className="text-[10px] text-[#777777] truncate">{p.desc}</div>
+                <div className={`text-xs font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}>{p.name}</div>
+                <div className={`text-[10px] truncate ${isLight ? 'text-slate-500' : 'text-[#777777]'}`}>{p.desc}</div>
               </button>
             );
           })}
@@ -100,20 +119,20 @@ export const EffectsPanel: React.FC = () => {
       </div>
 
       {/* Manual Sliders */}
-      <div className="space-y-4 pt-2 border-t border-[#242424]">
-        <label className="text-xs font-semibold uppercase tracking-wider text-[#888888] flex items-center space-x-1.5">
+      <div className={`space-y-4 pt-2 border-t ${isLight ? 'border-slate-200' : 'border-[#242424]'}`}>
+        <label className={`text-xs font-semibold uppercase tracking-wider flex items-center space-x-1.5 ${isLight ? 'text-slate-500' : 'text-[#888888]'}`}>
           <Sliders className="w-3.5 h-3.5 text-[#FFD21F]" />
           <span>Fine Adjustments</span>
         </label>
 
         {/* Brightness */}
         <div className="space-y-1">
-          <div className="flex justify-between text-xs text-[#888888]">
+          <div className={`flex justify-between text-xs ${isLight ? 'text-slate-500' : 'text-[#888888]'}`}>
             <span className="flex items-center space-x-1">
               <Sun className="w-3 h-3" />
               <span>Brightness</span>
             </span>
-            <span className="font-mono text-white">{filters.brightness}</span>
+            <span className={`font-mono ${isLight ? 'text-slate-900 font-semibold' : 'text-white'}`}>{filters.brightness}</span>
           </div>
           <input
             type="range"
@@ -127,12 +146,12 @@ export const EffectsPanel: React.FC = () => {
 
         {/* Contrast */}
         <div className="space-y-1">
-          <div className="flex justify-between text-xs text-[#888888]">
+          <div className={`flex justify-between text-xs ${isLight ? 'text-slate-500' : 'text-[#888888]'}`}>
             <span className="flex items-center space-x-1">
               <Contrast className="w-3 h-3" />
               <span>Contrast</span>
             </span>
-            <span className="font-mono text-white">{filters.contrast.toFixed(2)}x</span>
+            <span className={`font-mono ${isLight ? 'text-slate-900 font-semibold' : 'text-white'}`}>{filters.contrast.toFixed(2)}x</span>
           </div>
           <input
             type="range"
@@ -147,9 +166,9 @@ export const EffectsPanel: React.FC = () => {
 
         {/* Saturation */}
         <div className="space-y-1">
-          <div className="flex justify-between text-xs text-[#888888]">
+          <div className={`flex justify-between text-xs ${isLight ? 'text-slate-500' : 'text-[#888888]'}`}>
             <span>Saturation</span>
-            <span className="font-mono text-white">{filters.saturation.toFixed(2)}x</span>
+            <span className={`font-mono ${isLight ? 'text-slate-900 font-semibold' : 'text-white'}`}>{filters.saturation.toFixed(2)}x</span>
           </div>
           <input
             type="range"
@@ -164,9 +183,9 @@ export const EffectsPanel: React.FC = () => {
 
         {/* Blur */}
         <div className="space-y-1">
-          <div className="flex justify-between text-xs text-[#888888]">
+          <div className={`flex justify-between text-xs ${isLight ? 'text-slate-500' : 'text-[#888888]'}`}>
             <span>Blur</span>
-            <span className="font-mono text-white">{filters.blur}px</span>
+            <span className={`font-mono ${isLight ? 'text-slate-900 font-semibold' : 'text-white'}`}>{filters.blur}px</span>
           </div>
           <input
             type="range"
@@ -179,10 +198,12 @@ export const EffectsPanel: React.FC = () => {
         </div>
 
         {/* Vignette Toggle */}
-        <div className="p-3 bg-[#181818] border border-[#2B2B2B] rounded-lg flex items-center justify-between">
+        <div className={`p-3 rounded-lg flex items-center justify-between border ${
+          isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#181818] border-[#2B2B2B]'
+        }`}>
           <div className="flex items-center space-x-2">
-            <Eye className="w-4 h-4 text-[#A0A0A0]" />
-            <span className="text-xs text-white">Vignette Dark Edges</span>
+            <Eye className={`w-4 h-4 ${isLight ? 'text-slate-500' : 'text-[#A0A0A0]'}`} />
+            <span className={`text-xs ${isLight ? 'text-slate-800 font-medium' : 'text-white'}`}>Vignette Dark Edges</span>
           </div>
           <input
             type="checkbox"

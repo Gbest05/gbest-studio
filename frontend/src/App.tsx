@@ -2,13 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EditorPage } from './pages/EditorPage';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { api } from './services/api';
 import { useEditorStore } from './store/useEditorStore';
+import { useSiteConfigStore } from './store/useSiteConfigStore';
 
 export const App: React.FC = () => {
-  const [currentRoute, setCurrentRoute] = useState<'landing' | 'dashboard' | 'editor'>('landing');
+  const [currentRoute, setCurrentRoute] = useState<'landing' | 'dashboard' | 'editor' | 'admin'>('landing');
   const [activeProjectId, setActiveProjectId] = useState<string>('');
-  const { setCurrentUser } = useEditorStore();
+  const { setCurrentUser, openAuthModal } = useEditorStore();
+  const { fetchConfig } = useSiteConfigStore();
+
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
 
   // Handle Google OAuth 2.0 redirect callback & restore session
   useEffect(() => {
@@ -34,9 +41,9 @@ export const App: React.FC = () => {
         };
         setCurrentUser(userObj);
 
-        // Clean query/hash parameters from address bar
-        const cleanPath = window.location.pathname;
-        window.history.replaceState(null, '', cleanPath);
+        // Redirect directly to dashboard so user sees their projects page before studio
+        window.history.replaceState(null, '', '/dashboard');
+        setCurrentRoute('dashboard');
       } else if (authError) {
         console.warn('Google OAuth redirected with error:', authError);
         window.history.replaceState(null, '', window.location.pathname);
@@ -65,6 +72,16 @@ export const App: React.FC = () => {
       const path = window.location.pathname;
 
       if (path.startsWith('/editor')) {
+        const token = localStorage.getItem('gbest_token');
+        const user = localStorage.getItem('gbest_user');
+        if (!token && !user) {
+          // Unauthenticated guests must view dashboard and be prompted to sign up
+          window.history.replaceState(null, '', '/dashboard');
+          setCurrentRoute('dashboard');
+          openAuthModal('signup');
+          return;
+        }
+
         const parts = path.split('/');
         const id = parts[2];
         if (id) {
@@ -87,6 +104,8 @@ export const App: React.FC = () => {
           }
           setCurrentRoute('editor');
         }
+      } else if (path === '/admin') {
+        setCurrentRoute('admin');
       } else if (path === '/dashboard') {
         setCurrentRoute('dashboard');
       } else {
@@ -102,7 +121,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
+  }, [openAuthModal]);
 
   // Register PWA Service Worker
   useEffect(() => {
@@ -113,32 +132,34 @@ export const App: React.FC = () => {
     }
   }, []);
 
-  const navigateTo = (route: 'landing' | 'dashboard' | 'editor', projectId?: string) => {
-    setCurrentRoute(route);
-    if (route === 'editor') {
+  const navigateTo = (route: 'landing' | 'dashboard' | 'editor' | 'admin', projectId?: string) => {
+    if (route === 'admin') {
+      setCurrentRoute('admin');
+      window.history.pushState(null, '', '/admin');
+    } else if (route === 'editor') {
+      const token = localStorage.getItem('gbest_token');
+      const user = localStorage.getItem('gbest_user');
+      if (!token && !user) {
+        window.history.pushState(null, '', '/dashboard');
+        setCurrentRoute('dashboard');
+        openAuthModal('signup');
+        return;
+      }
       const id = projectId || activeProjectId || 'demo';
       setActiveProjectId(id);
+      setCurrentRoute('editor');
       window.history.pushState(null, '', `/editor/${id}`);
     } else if (route === 'dashboard') {
+      setCurrentRoute('dashboard');
       window.history.pushState(null, '', '/dashboard');
     } else {
+      setCurrentRoute('landing');
       window.history.pushState(null, '', '/');
     }
   };
 
-  const handleStartEditingFromLanding = async () => {
-    try {
-      const projects = await api.getProjects();
-      if (projects.length > 0) {
-        navigateTo('editor', projects[0].id);
-      } else {
-        const created = await api.createProject('My First Video', '9:16');
-        navigateTo('editor', created.id);
-      }
-    } catch {
-      // Fallback offline demo
-      navigateTo('editor', 'demo');
-    }
+  const handleStartEditingFromLanding = () => {
+    navigateTo('dashboard');
   };
 
   return (
@@ -147,6 +168,7 @@ export const App: React.FC = () => {
         <LandingPage
           onStartEditing={handleStartEditingFromLanding}
           onGoToDashboard={() => navigateTo('dashboard')}
+          onNavigateAdmin={() => navigateTo('admin')}
         />
       )}
 
@@ -154,6 +176,7 @@ export const App: React.FC = () => {
         <DashboardPage
           onOpenProject={(id) => navigateTo('editor', id)}
           onNavigateHome={() => navigateTo('landing')}
+          onNavigateAdmin={() => navigateTo('admin')}
         />
       )}
 
@@ -162,6 +185,14 @@ export const App: React.FC = () => {
           projectId={activeProjectId}
           onNavigateHome={() => navigateTo('landing')}
           onNavigateDashboard={() => navigateTo('dashboard')}
+          onNavigateAdmin={() => navigateTo('admin')}
+        />
+      )}
+
+      {currentRoute === 'admin' && (
+        <AdminDashboardPage
+          onNavigateHome={() => navigateTo('landing')}
+          onNavigateStudio={() => navigateTo('editor')}
         />
       )}
     </div>

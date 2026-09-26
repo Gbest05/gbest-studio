@@ -10,7 +10,7 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', sans-serif;
-  background-color: #111111;
+  background-color: #0E1015;
   color: #FFFFFF;
   user-select: none;
   -webkit-user-select: none;
@@ -18,13 +18,13 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Light mode theme styling - Modern Studio Slate */
+/* Light mode theme styling - Modern Studio Platinum */
 html.light {
   color-scheme: light;
 }
 
 html.light body {
-  background-color: #F8FAFC;
+  background-color: #F4F6FB;
   color: #0F172A;
 }
 
@@ -41,73 +41,242 @@ html.light ::-webkit-scrollbar-thumb:hover {
 }
 
 /* Light mode UI adaptations - Crisp White & Studio Slate */
+html.light [class*="bg-[#111111]"]:not(.video-stage-canvas *),
 html.light .bg-\[\#111111\] {
-  background-color: #F8FAFC !important;
+  background-color: #F4F6FB !important;
 }
 
+html.light [class*="bg-[#0E1015]"]:not(.video-stage-canvas *),
+html.light .bg-\[\#0E1015\] {
+  background-color: #F4F6FB !important;
+}
+
+html.light [class*="bg-[#0A0C10]"]:not(.video-stage-canvas *),
+html.light .bg-\[\#0A0C10\] {
+  background-color: #EBF0F7 !important;
+}
+
+html.light [class*="bg-[#0D0D0D]"]:not(.video-stage-canvas *),
 html.light .bg-\[\#0D0D0D\] {
   background-color: #F1F5F9 !important;
 }
 
+/* White panels and major surface containers */
+html.light [class*="bg-[#141414]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#161616]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#181818]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#1A1A1A]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#1B1B1B]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#1D1D1D]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#1E1E1E]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#1F1F1F]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#121212]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#131313]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#151515]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#0F0F0F]"]:not(.video-stage-canvas *),
 html.light .bg-\[\#141414\],
 html.light .bg-\[\#161616\],
 html.light .bg-\[\#181818\],
-html.light .bg-\[\#1F1F1F\] {
+html.light [class*="bg-[#171717]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#1C1C1C]"]:not(.video-stage-canvas *),
+html.light .bg-\[\#171717\],
+html.light .bg-\[\#1C1C1C\],
+html.light .bg-\[\#1A1A1A\],
+html.light .bg-\[\#1B1B1B\],
+html.light .bg-\[\#1D1D1D\],
+html.light .bg-\[\#1E1E1E\],
+html.light .bg-\[\#1F1F1F\],
+html.light .bg-\[\#121212\],
+html.light .bg-\[\#131313\],
+html.light .bg-\[\#151515\],
+html.light .bg-\[\#0F0F0F\] {
   background-color: #FFFFFF !important;
 }
 
-html.light .bg-\[\#1B1B1B\] {
-  background-color: #F8FAFC !important;
+/* Dark gradient card overrides in light mode */
+html.light [class*="from-[#201D12]"]:not(.video-stage-canvas *),
+html.light [class*="to-[#1A1A1A]"]:not(.video-stage-canvas *) {
+  background-image: none !important;
+  background-color: #FEF3C7 !important;
+  border-color: #FDE68A !important;
 }
 
+/* Secondary cards, hover surfaces, and inner sub-panels */
+html.light [class*="bg-[#202020]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#222222]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#242424]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#252525]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#262626]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#282828]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#2A2A2A]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#2D2D2D]"]:not(.video-stage-canvas *),
+html.light [class*="bg-[#333333]"]:not(.video-stage-canvas *),
 html.light .bg-\[\#202020\],
 html.light .bg-\[\#222222\],
 html.light .bg-\[\#242424\],
-html.light .bg-\[\#252525\] {
+html.light .bg-\[\#252525\],
+html.light .bg-\[\#262626\],
+html.light .bg-\[\#282828\],
+html.light .bg-\[\#2A2A2A\],
+html.light .bg-\[\#2D2D2D\],
+html.light .bg-\[\#333333\] {
   background-color: #F1F5F9 !important;
 }
 
+/* Borders */
+html.light [class*="border-[#222222]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#242424]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#262626]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#282828]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#2A2A2A]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#2B2B2B]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#2D2D2D]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#2F2F2F]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#333333]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#383838]"]:not(.video-stage-canvas *),
+html.light [class*="border-[#3A3A3A]"]:not(.video-stage-canvas *),
 html.light .border-\[\#222222\],
 html.light .border-\[\#242424\],
 html.light .border-\[\#262626\],
 html.light .border-\[\#282828\],
+html.light .border-\[\#2A2A2A\],
 html.light .border-\[\#2B2B2B\],
 html.light .border-\[\#2D2D2D\],
+html.light .border-\[\#2F2F2F\],
 html.light .border-\[\#333333\],
+html.light .border-\[\#383838\],
 html.light .border-\[\#3A3A3A\] {
-  border-color: #E2E8F0 !important;
+  border-color: #CBD5E1 !important;
 }
 
-/* Light surface text contrast */
-html.light .bg-\[\#111111\] .text-white,
-html.light .bg-\[\#0D0D0D\] .text-white,
-html.light .bg-\[\#141414\] .text-white,
-html.light .bg-\[\#161616\] .text-white,
-html.light .bg-\[\#181818\] .text-white,
-html.light .bg-\[\#1B1B1B\] .text-white,
-html.light .bg-\[\#1F1F1F\] .text-white,
-html.light .bg-white .text-white {
+/* Light mode form controls (Inputs, Selects, Textareas) */
+html.light input:not([type="range"]):not([type="color"]),
+html.light select,
+html.light textarea {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+html.light input:not([type="range"]):not([type="color"]):focus,
+html.light select:focus,
+html.light textarea:focus {
+  border-color: #F59E0B !important;
+  outline: none !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Secondary action buttons */
+html.light button.bg-\[\#1D1D1D\],
+html.light button.bg-\[\#1F1F1F\],
+html.light button.bg-\[\#242424\],
+html.light button.bg-\[\#252525\],
+html.light button.bg-\[\#262626\],
+html.light button.bg-\[\#282828\],
+html.light button.bg-\[\#333333\],
+html.light button[class*="bg-[#1D1D1D]"],
+html.light button[class*="bg-[#1F1F1F]"],
+html.light button[class*="bg-[#242424]"],
+html.light button[class*="bg-[#252525]"],
+html.light button[class*="bg-[#262626]"] {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+html.light button.bg-\[\#1D1D1D\]:hover,
+html.light button.bg-\[\#1F1F1F\]:hover,
+html.light button.bg-\[\#242424\]:hover,
+html.light button.bg-\[\#252525\]:hover,
+html.light button.bg-\[\#262626\]:hover,
+html.light button[class*="bg-[#1D1D1D]"]:hover,
+html.light button[class*="bg-[#1F1F1F]"]:hover,
+html.light button[class*="bg-[#242424]"]:hover {
+  background-color: #E2E8F0 !important;
   color: #0F172A !important;
 }
 
-html.light .text-gray-200,
-html.light .text-gray-300 {
-  color: #334155 !important;
+/* Light surface text contrast - NEVER override text inside timeline clips, track items, or elements marked keep-white */
+html.light .text-white:not(.video-stage-canvas *):not(.timeline-clip *):not(.timeline-track-item *):not(.keep-white):not(.keep-white *) {
+  color: #0F172A !important;
 }
 
-html.light .text-gray-400,
-html.light .text-\[\#A0A0A0\] {
-  color: #64748B !important;
+/* Explicit rule: timeline clips, waveforms, and badges MUST ALWAYS have crisp white text in BOTH light and dark mode */
+html.light .timeline-clip,
+html.light .timeline-clip *,
+html.light .timeline-track-item,
+html.light .timeline-track-item *,
+html.light .keep-white,
+html.light .keep-white * {
+  color: #FFFFFF !important;
 }
 
-/* Ensure video preview stage stays deep matte black */
-html.light .video-preview-viewport,
-html.light .bg-black {
-  background-color: #000000 !important;
+/* Timeline Light Theme UI Adaptations */
+html.light .timeline-container {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light .timeline-toolbar {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light .timeline-rail {
+  background-color: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light .timeline-workspace {
+  background-color: #F8FAFC !important;
+}
+
+html.light .timeline-ruler {
+  background-color: #F1F5F9 !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light .timeline-lane {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+html.light .text-gray-100:not(.video-stage-canvas *):not(.timeline-clip *):not(.keep-white *),
+html.light .text-gray-200:not(.video-stage-canvas *):not(.timeline-clip *):not(.keep-white *),
+html.light .text-gray-300:not(.video-stage-canvas *):not(.timeline-clip *):not(.keep-white *) {
+  color: #1E293B !important;
+}
+
+html.light .text-gray-400:not(.video-stage-canvas *),
+html.light .text-gray-500:not(.video-stage-canvas *),
+html.light .text-\[\#A0A0A0\]:not(.video-stage-canvas *),
+html.light .text-\[\#888888\]:not(.video-stage-canvas *),
+html.light [class*="text-[#A0A0A0]"]:not(.video-stage-canvas *),
+html.light [class*="text-[#888888]"]:not(.video-stage-canvas *) {
+  color: #475569 !important;
+}
+
+/* Ensure video preview viewport is light in light mode when not fullscreen */
+html.light .video-preview-viewport:not(.fullscreen-viewport) {
+  background-color: #F1F5F9 !important;
+}
+
+/* Keep video stage canvas itself deep black */
+html.light .video-stage-canvas {
+  background-color: #000000;
+}
+
+/* Preserve original text colors inside video canvas (captions, overlays) */
+html.light .video-stage-canvas .text-white {
+  color: #FFFFFF !important;
 }
 
 /* Gold accent contrast */
-html.light .text-\[\#FFD21F\] {
+html.light .text-\[\#FFD21F\]:not(.video-stage-canvas *) {
   color: #D97706 !important;
 }
 
@@ -258,5 +427,39 @@ input[type="range"]::-moz-range-thumb {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+/* Video Transition GPU Animations */
+@keyframes transitionCrossfade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
+@keyframes transitionFadeBlack {
+  0% { opacity: 0; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
 
+@keyframes transitionFlash {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes transitionWipeLeft {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0% 0 0); }
+}
+
+@keyframes transitionWipeRight {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0%); }
+}
+
+@keyframes transitionZoomIn {
+  from { transform: scale(0.65); opacity: 0.5; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes transitionZoomOut {
+  from { transform: scale(1.35); opacity: 0.5; }
+  to { transform: scale(1); opacity: 1; }
+}

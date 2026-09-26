@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Float, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import Column, String, Float, Integer, Text, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -17,6 +17,8 @@ class User(Base):
     google_id = Column(String(255), unique=True, nullable=True, index=True)
     avatar_url = Column(String(500), nullable=True)
     provider = Column(String(50), default="email")
+    is_admin = Column(Boolean, default=False)
+    is_suspended = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     projects = relationship("Project", back_populates="user", cascade="all, delete-orphan")
@@ -28,7 +30,7 @@ class Project(Base):
     user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
     name = Column(String(255), nullable=False, default="Untitled Project")
     description = Column(Text, nullable=True)
-    thumbnail_url = Column(String(500), nullable=True)
+    thumbnail_url = Column(Text, nullable=True)
     aspect_ratio = Column(String(20), default="16:9")
     project_data = Column(Text, nullable=True)  # Complete JSON editor state (clips, tracks, text, audio, filters)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -108,3 +110,10 @@ class ExportJob(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     project = relationship("Project", back_populates="export_jobs")
+
+class SiteSetting(Base):
+    __tablename__ = "site_settings"
+
+    key = Column(String(100), primary_key=True)
+    value = Column(Text, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

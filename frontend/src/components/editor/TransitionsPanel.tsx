@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowLeftRight, Clock, Sparkles, Zap, Eye, MoveHorizontal, ZoomIn, ZoomOut } from 'lucide-react';
 import { useEditorStore } from '../../store/useEditorStore';
 import { Transition } from '../../types/editor';
@@ -62,24 +62,66 @@ const TRANSITIONS: TransitionOption[] = [
 ];
 
 export const TransitionsPanel: React.FC = () => {
-  const { transition, setTransition } = useEditorStore();
+  const {
+    clips,
+    selectedClipId,
+    setSelectedClipId,
+    transition,
+    setTransition,
+    updateClipTransition,
+    setCurrentTime,
+    setIsPlaying,
+  } = useEditorStore();
 
-  const currentType = transition?.type || 'none';
-  const currentDuration = transition?.duration ?? 0.5;
+  const [targetMode, setTargetMode] = useState<'all' | 'last' | 'selected'>('last');
+
+  const activeClip =
+    targetMode === 'selected'
+      ? clips.find((c) => c.id === selectedClipId) || clips[clips.length - 1]
+      : targetMode === 'last'
+      ? clips[clips.length - 1]
+      : null;
+
+  const currentType = (activeClip?.transition?.type) || transition?.type || 'none';
+  const currentDuration = (activeClip?.transition?.duration) ?? transition?.duration ?? 0.5;
 
   const handleSelectTransition = (type: Transition['type']) => {
-    setTransition({
+    const newTrans: Transition = {
       type,
       duration: currentDuration,
-    });
+    };
+
+    if (activeClip && (targetMode === 'selected' || targetMode === 'last')) {
+      updateClipTransition(activeClip.id, newTrans);
+      if (type !== 'none') {
+        const previewTime = Math.max(0, (activeClip.start_time ?? 0) - 0.2);
+        setCurrentTime(previewTime);
+        setIsPlaying(true);
+      }
+    } else {
+      setTransition(newTrans);
+      clips.forEach((c) => updateClipTransition(c.id, newTrans));
+      if (type !== 'none' && clips.length > 1) {
+        const previewTime = Math.max(0, (clips[1].start_time ?? 0) - 0.2);
+        setCurrentTime(previewTime);
+        setIsPlaying(true);
+      }
+    }
   };
 
   const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const duration = parseFloat(e.target.value);
-    setTransition({
+    const newTrans: Transition = {
       type: currentType,
       duration,
-    });
+    };
+
+    if (activeClip && (targetMode === 'selected' || targetMode === 'last')) {
+      updateClipTransition(activeClip.id, newTrans);
+    } else {
+      setTransition(newTrans);
+      clips.forEach((c) => updateClipTransition(c.id, newTrans));
+    }
   };
 
   return (
@@ -97,7 +139,71 @@ export const TransitionsPanel: React.FC = () => {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      <div className="flex-1 overflow-y-auto p-4 space-y-5">
+        {/* Clip Section Target Selector */}
+        {clips.length > 1 && (
+          <div className="p-3 bg-[#1B1B1B] border border-[#2A2A2A] rounded-xl space-y-2.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-white">Apply Transition To:</span>
+              <span className="text-[10px] text-[#FFD21F] font-mono font-bold">
+                {clips.length} Sections
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5 text-xs">
+              <button
+                onClick={() => setTargetMode('last')}
+                className={`py-1.5 px-2 rounded-lg font-medium text-center transition-all ${
+                  targetMode === 'last'
+                    ? 'bg-[#FFD21F] text-black font-bold shadow'
+                    : 'bg-[#242424] text-gray-300 hover:text-white'
+                }`}
+              >
+                Last Section
+              </button>
+              <button
+                onClick={() => {
+                  setTargetMode('selected');
+                  if (!selectedClipId && clips.length > 0) {
+                    setSelectedClipId(clips[clips.length - 1].id);
+                  }
+                }}
+                className={`py-1.5 px-2 rounded-lg font-medium text-center transition-all ${
+                  targetMode === 'selected'
+                    ? 'bg-[#FFD21F] text-black font-bold shadow'
+                    : 'bg-[#242424] text-gray-300 hover:text-white'
+                }`}
+              >
+                Selected
+              </button>
+              <button
+                onClick={() => setTargetMode('all')}
+                className={`py-1.5 px-2 rounded-lg font-medium text-center transition-all ${
+                  targetMode === 'all'
+                    ? 'bg-[#FFD21F] text-black font-bold shadow'
+                    : 'bg-[#242424] text-gray-300 hover:text-white'
+                }`}
+              >
+                All Clips
+              </button>
+            </div>
+
+            {targetMode === 'selected' && (
+              <div className="pt-1">
+                <select
+                  value={selectedClipId || clips[0]?.id}
+                  onChange={(e) => setSelectedClipId(e.target.value)}
+                  className="w-full bg-[#242424] text-xs text-white border border-[#383838] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#FFD21F]"
+                >
+                  {clips.map((c, idx) => (
+                    <option key={c.id} value={c.id}>
+                      Section {idx + 1}: {c.filename} ({(c.trim_start || 0).toFixed(1)}s - {(c.trim_end || c.duration).toFixed(1)}s)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        )}
         {/* Transition Duration Control */}
         {currentType !== 'none' && (
           <div className="p-3 bg-[#1B1B1B] border border-[#2A2A2A] rounded-xl space-y-2">

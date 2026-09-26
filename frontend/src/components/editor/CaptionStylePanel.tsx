@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlignLeft, AlignCenter, AlignRight, Sparkles, Check } from 'lucide-react';
 import { useEditorStore } from '../../store/useEditorStore';
-import { CaptionPreset, CaptionAnimation } from '../../types/editor';
+import { CaptionPreset, CaptionAnimation, AVAILABLE_FONTS } from '../../types/editor';
 
 interface PresetOption {
   id: CaptionPreset;
@@ -19,7 +19,7 @@ const PRESETS: PresetOption[] = [
   { id: 'cinematic', name: 'Cinematic', previewClass: 'tracking-widest uppercase text-xs text-[#F0F0F0]' },
 ];
 
-const FONTS = ['Inter', 'Poppins', 'Impact', 'Arial', 'Montserrat', 'Roboto'];
+const FONTS = AVAILABLE_FONTS;
 
 const ANIMATIONS: { id: CaptionAnimation; name: string }[] = [
   { id: 'none', name: 'None' },
@@ -32,7 +32,16 @@ const ANIMATIONS: { id: CaptionAnimation; name: string }[] = [
 const COLOR_PALETTE = ['#FFFFFF', '#FFD21F', '#FF8A00', '#F7F7F5', '#00F0FF', '#FF0055'];
 
 export const CaptionStylePanel: React.FC = () => {
-  const { globalCaptionStyle, setGlobalCaptionStyle } = useEditorStore();
+  const {
+    globalCaptionStyle,
+    setGlobalCaptionStyle,
+    theme,
+    captions,
+    selectedCaptionId,
+    updateCaption,
+  } = useEditorStore();
+
+  const isLight = theme === 'light';
 
   const handleApplyPreset = (preset: CaptionPreset) => {
     switch (preset) {
@@ -202,19 +211,45 @@ export const CaptionStylePanel: React.FC = () => {
         </select>
       </div>
 
-      {/* Font Size Slider */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-xs">
+      {/* Font Size Slider & A- / A+ Stepper */}
+      <div className="space-y-2">
+        <div className="flex justify-between items-center text-xs">
           <span className="font-semibold uppercase tracking-wider text-[#888888]">Font Size</span>
-          <span className="font-mono text-white">{globalCaptionStyle.font_size}px</span>
+          <div className="flex items-center space-x-1.5">
+            <button
+              onClick={() => setGlobalCaptionStyle({ font_size: Math.max(4, globalCaptionStyle.font_size - 2) })}
+              className="px-2 py-0.5 rounded bg-[#242424] hover:bg-[#333333] text-gray-200 hover:text-white font-bold text-xs transition-colors"
+              title="Decrease Font Size (A-)"
+            >
+              A-
+            </button>
+            <input
+              type="number"
+              min="4"
+              max="100"
+              value={globalCaptionStyle.font_size}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 4;
+                setGlobalCaptionStyle({ font_size: Math.max(4, Math.min(100, val)) });
+              }}
+              className="w-12 bg-[#181818] border border-[#333333] rounded px-1 py-0.5 font-mono text-[#FFD21F] font-bold text-xs text-center outline-none focus:border-[#FFD21F]"
+            />
+            <button
+              onClick={() => setGlobalCaptionStyle({ font_size: Math.min(100, globalCaptionStyle.font_size + 2) })}
+              className="px-2 py-0.5 rounded bg-[#242424] hover:bg-[#333333] text-gray-200 hover:text-white font-bold text-xs transition-colors"
+              title="Increase Font Size (A+)"
+            >
+              A+
+            </button>
+          </div>
         </div>
         <input
           type="range"
-          min="16"
-          max="54"
+          min="4"
+          max="100"
           value={globalCaptionStyle.font_size}
-          onChange={(e) => setGlobalCaptionStyle({ font_size: parseInt(e.target.value) })}
-          className="w-full accent-[#FFD21F]"
+          onChange={(e) => setGlobalCaptionStyle({ font_size: Math.max(4, parseInt(e.target.value) || 4) })}
+          className="w-full accent-[#FFD21F] cursor-pointer"
         />
       </div>
 
@@ -257,6 +292,61 @@ export const CaptionStylePanel: React.FC = () => {
         </div>
       </div>
 
+      {/* Caption Background Box (Requirement 1: Add caption background color to caption in light-mode) */}
+      <div className={`space-y-2 pt-2 border-t ${isLight ? 'border-slate-200' : 'border-[#252525]'}`}>
+        <div className="flex items-center justify-between">
+          <label className={`text-xs font-semibold uppercase tracking-wider ${isLight ? 'text-slate-700' : 'text-[#888888]'}`}>
+            Caption Background Box
+          </label>
+          <span className={`text-[10px] font-mono font-bold ${isLight ? 'text-amber-700' : 'text-[#FFD21F]'}`}>
+            {globalCaptionStyle.background_color === 'transparent' ? 'None' : 'Active'}
+          </span>
+        </div>
+        <div className="grid grid-cols-4 gap-1.5">
+          {[
+            { label: 'None', value: 'transparent', style: { background: isLight ? '#F1F5F9' : '#1A1A1A', color: isLight ? '#333' : '#aaa' } },
+            { label: 'Dark Box', value: 'rgba(0, 0, 0, 0.78)', style: { background: '#111111', color: '#FFFFFF' } },
+            { label: 'Frosted', value: 'rgba(255, 255, 255, 0.90)', style: { background: '#FFFFFF', color: '#0F172A', border: '1px solid #CBD5E1' } },
+            { label: 'Amber Box', value: 'rgba(255, 210, 31, 0.35)', style: { background: '#FFD21F', color: '#000000' } },
+            { label: 'Slate Box', value: 'rgba(15, 23, 42, 0.85)', style: { background: '#0F172A', color: '#FFFFFF' } },
+            { label: 'Red Box', value: 'rgba(220, 38, 38, 0.85)', style: { background: '#DC2626', color: '#FFFFFF' } },
+            { label: 'Cyan Box', value: 'rgba(6, 182, 212, 0.35)', style: { background: '#06B6D4', color: '#000000' } },
+            { label: 'Emerald', value: 'rgba(16, 185, 129, 0.35)', style: { background: '#10B981', color: '#000000' } },
+          ].map((bg) => {
+            const isSelected = (globalCaptionStyle.background_color || 'transparent') === bg.value;
+            return (
+              <button
+                key={bg.label}
+                type="button"
+                onClick={() => {
+                  setGlobalCaptionStyle({ background_color: bg.value });
+                  if (selectedCaptionId) {
+                    updateCaption(selectedCaptionId, {
+                      style: {
+                        ...(captions.find((c) => c.id === selectedCaptionId)?.style || {}),
+                        background_color: bg.value,
+                      },
+                    });
+                  }
+                }}
+                className={`py-1.5 px-1 rounded-lg text-[10px] font-semibold transition-all text-center border ${
+                  isSelected
+                    ? isLight
+                      ? 'ring-2 ring-amber-500 border-amber-600 shadow-sm'
+                      : 'ring-2 ring-[#FFD21F] border-white shadow'
+                    : isLight
+                    ? 'border-slate-300 hover:border-amber-400'
+                    : 'border-[#333333] hover:border-[#555]'
+                }`}
+                style={bg.style}
+              >
+                {bg.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Caption Animation */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase tracking-wider text-[#888888]">
@@ -279,28 +369,96 @@ export const CaptionStylePanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Position Y (Percentage from top) */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-xs">
-          <span className="font-semibold uppercase tracking-wider text-[#888888]">Position Y</span>
-          <span className="font-mono text-white">
-            {globalCaptionStyle.position_y}% ({globalCaptionStyle.position_y > 65 ? 'Bottom' : globalCaptionStyle.position_y < 35 ? 'Top' : 'Center'})
+      {/* 2D Screen Position & Quick Placement */}
+      <div className="space-y-2.5 pt-1 border-t border-[#252525]">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold uppercase tracking-wider text-[#888888]">
+            Screen Position
+          </label>
+          <span className="text-[10px] text-[#FFD21F] font-mono">
+            X: {globalCaptionStyle.position_x ?? 50}%, Y: {globalCaptionStyle.position_y}%
           </span>
         </div>
-        <input
-          type="range"
-          min="10"
-          max="90"
-          value={globalCaptionStyle.position_y}
-          onChange={(e) => setGlobalCaptionStyle({ position_y: parseInt(e.target.value) })}
-          className="w-full accent-[#FFD21F]"
-        />
+
+        {/* 9-Point Quick Alignment Grid */}
+        <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-[#141414] border border-[#262626] rounded-xl">
+          {[
+            { label: 'Top Left', x: 20, y: 15 },
+            { label: 'Top Center', x: 50, y: 15 },
+            { label: 'Top Right', x: 80, y: 15 },
+            { label: 'Mid Left', x: 20, y: 50 },
+            { label: 'Center', x: 50, y: 50 },
+            { label: 'Mid Right', x: 80, y: 50 },
+            { label: 'Bot Left', x: 20, y: 80 },
+            { label: 'Bottom', x: 50, y: 80 },
+            { label: 'Bot Right', x: 80, y: 80 },
+          ].map((pos) => {
+            const isMatch =
+              (globalCaptionStyle.position_x ?? 50) === pos.x &&
+              globalCaptionStyle.position_y === pos.y;
+            return (
+              <button
+                key={pos.label}
+                type="button"
+                onClick={() =>
+                  setGlobalCaptionStyle({
+                    position_x: pos.x,
+                    position_y: pos.y,
+                  })
+                }
+                className={`py-1.5 px-1 rounded-lg text-[10px] font-semibold transition-all border ${
+                  isMatch
+                    ? 'bg-[#FFD21F] text-black border-[#FFD21F] shadow-xs'
+                    : 'bg-[#1C1C1C] border-[#2A2A2A] text-gray-400 hover:text-white hover:bg-[#252525]'
+                }`}
+              >
+                {pos.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Position X Slider */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs">
+            <span className="text-[11px] text-[#A0A0A0]">Horizontal (X - Left to Right)</span>
+            <span className="font-mono text-white text-[11px]">{globalCaptionStyle.position_x ?? 50}%</span>
+          </div>
+          <input
+            type="range"
+            min="10"
+            max="90"
+            value={globalCaptionStyle.position_x ?? 50}
+            onChange={(e) => setGlobalCaptionStyle({ position_x: parseInt(e.target.value) })}
+            className="w-full accent-[#FFD21F]"
+          />
+        </div>
+
+        {/* Position Y Slider */}
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs">
+            <span className="text-[11px] text-[#A0A0A0]">Vertical (Y - Top to Bottom)</span>
+            <span className="font-mono text-white text-[11px]">{globalCaptionStyle.position_y}%</span>
+          </div>
+          <input
+            type="range"
+            min="10"
+            max="90"
+            value={globalCaptionStyle.position_y}
+            onChange={(e) => setGlobalCaptionStyle({ position_y: parseInt(e.target.value) })}
+            className="w-full accent-[#FFD21F]"
+          />
+        </div>
+
+        <p className="text-[10px] text-gray-400 italic">
+          💡 You can also drag the caption directly anywhere on the screen with your cursor!
+        </p>
       </div>
 
       {/* Text Alignment */}
       <div className="space-y-1.5">
         <label className="text-xs font-semibold uppercase tracking-wider text-[#888888]">
-          Alignment
+          Text Alignment
         </label>
         <div className="flex bg-[#161616] border border-[#2B2B2B] rounded-lg p-0.5">
           {(['left', 'center', 'right'] as const).map((align) => (

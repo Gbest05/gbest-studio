@@ -50,7 +50,9 @@ export interface ExportStatus {
 export const api = {
   // Projects
   async getProjects(): Promise<ProjectSummary[]> {
-    const res = await fetch(`${API_BASE}/projects`);
+    const res = await fetch(`${API_BASE}/projects`, {
+      headers: this.getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch projects');
     return res.json();
   },
@@ -58,7 +60,10 @@ export const api = {
   async createProject(name: string = "Untitled Project", aspect_ratio: string = "16:9"): Promise<ProjectDetail> {
     const res = await fetch(`${API_BASE}/projects`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+      },
       body: JSON.stringify({ name, aspect_ratio }),
     });
     if (!res.ok) throw new Error('Failed to create project');
@@ -66,7 +71,9 @@ export const api = {
   },
 
   async getProject(id: string): Promise<ProjectDetail> {
-    const res = await fetch(`${API_BASE}/projects/${id}`);
+    const res = await fetch(`${API_BASE}/projects/${id}`, {
+      headers: this.getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to fetch project');
     return res.json();
   },
@@ -74,7 +81,10 @@ export const api = {
   async updateProject(id: string, data: Partial<ProjectDetail>): Promise<ProjectDetail> {
     const res = await fetch(`${API_BASE}/projects/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+      },
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Failed to update project');
@@ -84,6 +94,7 @@ export const api = {
   async duplicateProject(id: string): Promise<ProjectDetail> {
     const res = await fetch(`${API_BASE}/projects/${id}/duplicate`, {
       method: 'POST',
+      headers: this.getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Failed to duplicate project');
     return res.json();
@@ -92,6 +103,7 @@ export const api = {
   async deleteProject(id: string): Promise<void> {
     const res = await fetch(`${API_BASE}/projects/${id}`, {
       method: 'DELETE',
+      headers: this.getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Failed to delete project');
   },
@@ -133,6 +145,18 @@ export const api = {
     });
   },
 
+  async deleteVideo(videoId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/videos/${videoId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to delete video' }));
+      throw new Error(err.detail || 'Failed to delete video');
+    }
+    return res.json();
+  },
+
   // Captions
   async generateCaptions(videoId: string, projectId?: string): Promise<any> {
     const res = await fetch(`${API_BASE}/captions/generate`, {
@@ -168,6 +192,18 @@ export const api = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to extract audio from video' }));
       throw new Error(err.detail || 'Failed to extract audio from video');
+    }
+    return res.json();
+  },
+
+  async deleteAudio(audioId: string): Promise<any> {
+    const res = await fetch(`${API_BASE}/audio/${audioId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to delete audio' }));
+      throw new Error(err.detail || 'Failed to delete audio');
     }
     return res.json();
   },
@@ -298,5 +334,142 @@ export const api = {
     if (!res.ok) return { user: null };
     return res.json();
   },
+
+  async updateProfile(data: { name?: string; avatar?: string }): Promise<any> {
+    const res = await fetch(`${API_BASE}/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+      },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to update profile' }));
+      throw new Error(err.detail || 'Failed to update profile');
+    }
+    const result = await res.json();
+    if (result.user) {
+      localStorage.setItem('gbest_user', JSON.stringify(result.user));
+    }
+    return result;
+  },
+
+  async uploadAvatar(file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers = this.getAuthHeaders();
+    const res = await fetch(`${API_BASE}/auth/profile/avatar`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to upload profile image' }));
+      throw new Error(err.detail || 'Failed to upload profile image');
+    }
+    const result = await res.json();
+    if (result.user) {
+      localStorage.setItem('gbest_user', JSON.stringify(result.user));
+    }
+    return result;
+  },
+
+  // Site Configuration & Admin Customization
+  async getSiteConfig(): Promise<Record<string, any>> {
+    try {
+      const res = await fetch(`${API_BASE}/site-config`);
+      if (!res.ok) return {};
+      const data = await res.json();
+      return data.config || {};
+    } catch {
+      return {};
+    }
+  },
+
+  async updateSiteConfig(settings: Record<string, any>): Promise<any> {
+    const res = await fetch(`${API_BASE}/site-config`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+      },
+      body: JSON.stringify({ settings }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to update site configuration' }));
+      throw new Error(err.detail || 'Failed to update site configuration');
+    }
+    return res.json();
+  },
+
+  async uploadSiteAsset(file: File): Promise<{ url: string; filename: string; media_type: 'video' | 'image' }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await fetch(`${API_BASE}/site-config/upload`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to upload asset' }));
+      throw new Error(err.detail || 'Failed to upload asset');
+    }
+    return res.json();
+  },
+
+  // Password Management
+  async changePassword(payload: { current_password?: string; new_password: string }): Promise<{ status: string; message: string }> {
+    const res = await fetch(`${API_BASE}/auth/change-password`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to change password' }));
+      throw new Error(err.detail || 'Failed to change password');
+    }
+    return res.json();
+  },
+
+  // Admin User Management
+  async getAdminUsers(): Promise<{ users: any[]; total: number }> {
+    const res = await fetch(`${API_BASE}/auth/admin/users`, {
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to fetch users' }));
+      throw new Error(err.detail || 'Failed to fetch users');
+    }
+    return res.json();
+  },
+
+  async toggleUserSuspension(userId: string): Promise<{ status: string; message: string; is_suspended: boolean }> {
+    const res = await fetch(`${API_BASE}/auth/admin/users/${userId}/suspend`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to update user status' }));
+      throw new Error(err.detail || 'Failed to update user status');
+    }
+    return res.json();
+  },
+
+  async deleteAdminUser(userId: string): Promise<{ status: string; message: string }> {
+    const res = await fetch(`${API_BASE}/auth/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: this.getAuthHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to delete user' }));
+      throw new Error(err.detail || 'Failed to delete user');
+    }
+    return res.json();
+  },
 };
+
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Trash2, Plus, Clock, Split, GitMerge, Palette, AlertCircle } from 'lucide-react';
+import { Sparkles, Trash2, Plus, Clock, Split, GitMerge, Palette, AlertCircle, Video } from 'lucide-react';
 import { useEditorStore } from '../../store/useEditorStore';
 import { api } from '../../services/api';
 
@@ -11,6 +11,7 @@ export const CaptionPanel: React.FC<CaptionPanelProps> = ({ onOpenStyle }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [infoNotice, setInfoNotice] = useState<string | null>(null);
 
   const {
     clips,
@@ -23,23 +24,26 @@ export const CaptionPanel: React.FC<CaptionPanelProps> = ({ onOpenStyle }) => {
     splitCaption,
     selectedCaptionId,
     setSelectedCaptionId,
+    selectedClipId,
+    setSelectedClipId,
     setCurrentTime,
     duration,
   } = useEditorStore();
 
-  const primaryClip = clips[0];
+  const selectedClip = clips.find((c) => c.id === selectedClipId) || clips[0];
 
   const handleGenerateCaptions = async () => {
-    if (!primaryClip) {
-      setErrorMessage('Please upload a video first before generating captions.');
+    if (!selectedClip) {
+      setErrorMessage('Please upload and select a video first before generating captions.');
       return;
     }
 
     setIsGenerating(true);
     setErrorMessage(null);
+    setInfoNotice(null);
 
     const steps = [
-      'Extracting audio...',
+      'Extracting audio from selected video...',
       'Analyzing speech patterns...',
       'Generating AI transcript...',
       'Synchronizing timestamps...',
@@ -56,13 +60,33 @@ export const CaptionPanel: React.FC<CaptionPanelProps> = ({ onOpenStyle }) => {
     }, 900);
 
     try {
-      const res = await api.generateCaptions(primaryClip.video_id, projectId);
+      const res = await api.generateCaptions(selectedClip.video_id, projectId);
       clearInterval(interval);
       if (res.segments && res.segments.length > 0) {
-        setCaptions(res.segments);
+        // Offset timestamps to align with selectedClip's timeline start_time
+        const offsetSec = selectedClip.start_time || 0;
+        const adjustedSegments = res.segments.map((seg: any) => ({
+          ...seg,
+          start: Math.round((seg.start + offsetSec) * 100) / 100,
+          end: Math.round((seg.end + offsetSec) * 100) / 100,
+          words: (seg.words || []).map((w: any) => ({
+            ...w,
+            start: Math.round((w.start + offsetSec) * 100) / 100,
+            end: Math.round((w.end + offsetSec) * 100) / 100,
+          })),
+        }));
+
+        // Replace captions specifically for selectedClip's time range, preserving other clips' captions
+        const clipStart = selectedClip.start_time || 0;
+        const clipEnd = clipStart + ((selectedClip.trim_end || selectedClip.duration) - (selectedClip.trim_start || 0));
+        const otherCaptions = captions.filter((c) => c.end <= clipStart || c.start >= clipEnd);
+        const finalCaptions = [...otherCaptions, ...adjustedSegments].sort((a, b) => a.start - b.start);
+
+        setCaptions(finalCaptions);
         setStatusMessage(null);
+        setInfoNotice(`Transcribed ${res.segments.length} captions for "${selectedClip.filename}"!`);
       } else {
-        throw new Error('No caption segments generated');
+        setInfoNotice(`No spoken words detected in "${selectedClip.filename}".`);
       }
     } catch (err: any) {
       clearInterval(interval);
@@ -111,7 +135,7 @@ export const CaptionPanel: React.FC<CaptionPanelProps> = ({ onOpenStyle }) => {
   };
 
   return (
-    <div className="p-4 space-y-4 text-sm h-full flex flex-col">
+    <div className="p-4 space-y-4 text-sm min-h-full flex flex-col pb-28 sm:pb-32">
       {/* Header & Style shortcut */}
       <div className="flex items-center justify-between">
         <div>
@@ -127,14 +151,75 @@ export const CaptionPanel: React.FC<CaptionPanelProps> = ({ onOpenStyle }) => {
         </button>
       </div>
 
+      {/* Target Video Selector (Transcribe only selected video) */}
+      {clips.length > 0 && (
+        <div className="bg-[#1A1A1A] border border-[#2B2B2B] rounded-xl p-2.5 space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] text-[#A0A0A0]">
+            <span className="font-semibold uppercase tracking-wider text-[10px] text-[#FFD21F]">
+              Selected Video
+            </span>
+            <span>{clips.length > 1 ? `${clips.length} videos on timeline` : '1 video'}</span>
+          </div>
+
+          {clips.length === 1 ? (
+            <div className="flex items-center space-x-2 px-2.5 py-1.5 rounded-lg bg-[#222222] border border-[#333333] text-xs text-white">
+              <Video className="w-3.5 h-3.5 text-[#FFD21F] flex-shrink-0" />
+              <span className="truncate flex-1 font-medium">{selectedClip.filename}</span>
+              <span className="text-[10px] font-mono text-[#A0A0A0]">
+                {((selectedClip.trim_end || selectedClip.duration) - (selectedClip.trim_start || 0)).toFixed(1)}s
+              </span>
+            </div>
+          ) : (
+            <div className="space-y-1 max-h-32 overflow-y-auto no-scrollbar">
+              {clips.map((clip) => {
+                const isTarget = selectedClip?.id === clip.id;
+                const dur = ((clip.trim_end || clip.duration) - (clip.trim_start || 0)).toFixed(1);
+                return (
+                  <button
+                    key={clip.id}
+                    onClick={() => setSelectedClipId(clip.id)}
+                    className={`w-full px-2.5 py-1.5 rounded-lg text-left flex items-center justify-between border transition-all text-xs ${
+                      isTarget
+                        ? 'bg-[#FFD21F]/15 border-[#FFD21F] text-white font-medium ring-1 ring-[#FFD21F]/40'
+                        : 'bg-[#222222] border-[#2E2E2E] text-gray-300 hover:border-[#444444]'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2 truncate flex-1 min-w-0 mr-2">
+                      <Video className={`w-3.5 h-3.5 flex-shrink-0 ${isTarget ? 'text-[#FFD21F]' : 'text-gray-400'}`} />
+                      <span className="truncate">{clip.filename}</span>
+                    </div>
+                    <div className="flex items-center space-x-1.5 flex-shrink-0">
+                      {isTarget && (
+                        <span className="text-[8px] bg-[#FFD21F] text-black px-1 rounded font-bold font-mono">
+                          SELECTED
+                        </span>
+                      )}
+                      <span className="text-[10px] font-mono text-[#A0A0A0]">
+                        {dur}s
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* AI Generate Button */}
       <button
         onClick={handleGenerateCaptions}
-        disabled={isGenerating || !primaryClip}
+        disabled={isGenerating || !selectedClip}
         className="w-full py-2.5 px-4 rounded-lg bg-[#FFD21F] hover:bg-[#E6BC15] text-black font-semibold text-xs flex items-center justify-center space-x-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-amber-500/10 active:scale-95"
       >
         <Sparkles className="w-4 h-4 text-black stroke-[2.5]" />
-        <span>{isGenerating ? statusMessage || 'Processing...' : 'Generate AI Captions'}</span>
+        <span>
+          {isGenerating
+            ? statusMessage || 'Processing...'
+            : selectedClip
+            ? `Transcribe Selected Video (${selectedClip.filename.slice(0, 16)}${selectedClip.filename.length > 16 ? '...' : ''})`
+            : 'Generate AI Captions'}
+        </span>
       </button>
 
       {/* Status Progress */}
@@ -151,6 +236,22 @@ export const CaptionPanel: React.FC<CaptionPanelProps> = ({ onOpenStyle }) => {
         <div className="p-3 bg-red-950/40 border border-red-800/60 rounded-lg flex items-start space-x-2 text-red-300 text-xs">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <span>{errorMessage}</span>
+        </div>
+      )}
+
+      {infoNotice && (
+        <div className="p-3.5 bg-amber-950/40 border border-amber-500/50 rounded-xl space-y-2.5 text-xs text-amber-200 animate-fade-in shadow-md">
+          <div className="flex items-start space-x-2">
+            <AlertCircle className="w-4 h-4 text-[#FFD21F] flex-shrink-0 mt-0.5" />
+            <span className="leading-relaxed">{infoNotice}</span>
+          </div>
+          <button
+            onClick={handleAddNewSegment}
+            className="w-full py-2 px-3 rounded-lg bg-[#FFD21F] hover:bg-[#E6BC15] text-black font-bold text-xs flex items-center justify-center space-x-1.5 transition-all shadow-sm active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Add Manual Subtitle</span>
+          </button>
         </div>
       )}
 

@@ -69,7 +69,7 @@ export const MobileToolbar: React.FC = () => {
           {/* Bottom Sheet Container */}
           <div
             className={`bg-[#141414] border-t border-[#333333] rounded-t-2xl flex flex-col shadow-2xl overflow-hidden transition-all duration-200 ${
-              isExpanded ? 'h-[92vh]' : 'h-[65vh] max-h-[82vh]'
+              isExpanded ? 'h-[96vh]' : 'h-[84vh] sm:h-[88vh]'
             }`}
           >
             {/* Sheet Handle & Header */}
@@ -115,7 +115,7 @@ export const MobileToolbar: React.FC = () => {
             </div>
 
             {/* Dynamic Sheet Content */}
-            <div className="flex-1 overflow-y-auto pb-safe">
+            <div className="flex-1 overflow-y-auto min-h-0 pb-32 sm:pb-36 overscroll-contain">
               {showStyleInSheet ? (
                 <CaptionStylePanel />
               ) : activeTool === 'media' ? (
