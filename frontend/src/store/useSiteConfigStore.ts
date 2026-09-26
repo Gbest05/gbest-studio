@@ -16,6 +16,12 @@ export interface SiteConfig {
   hero_cta_sub: string;
   hero_media_url: string;
   hero_media_type: 'video' | 'image';
+  hero_background_media_url: string;
+  hero_background_media_type: 'none' | 'image' | 'video';
+
+  frame_9_16_video_url: string;
+  frame_16_9_video_url: string;
+  frame_1_1_video_url: string;
 
   features_title: string;
   features_subtitle: string;
@@ -49,6 +55,12 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
   hero_media_url:
     'https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1188-large.mp4',
   hero_media_type: 'video',
+  hero_background_media_url: '',
+  hero_background_media_type: 'none',
+
+  frame_9_16_video_url: '',
+  frame_16_9_video_url: '',
+  frame_1_1_video_url: '',
 
   features_title: 'Professional Studio Tools. Zero Learning Curve.',
   features_subtitle:

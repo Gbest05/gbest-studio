@@ -52,36 +52,53 @@ def init_db():
                 conn.execute(text("ALTER TABLE projects ADD COLUMN user_id VARCHAR(36)"))
                 conn.commit()
 
-            # Seed default administrator if missing
-            admin_check = conn.execute(text("SELECT count(*) FROM users WHERE is_admin = 1")).scalar()
-            if not admin_check or admin_check == 0:
-                print("Seeding default administrator into database...")
-                conn.execute(
-                    text(
-                        "INSERT OR REPLACE INTO users (id, name, email, password_hash, is_admin, provider, is_suspended) "
-                        "VALUES (:id, :name, :email, :password_hash, 1, 'email', 0)"
-                    ),
-                    {
-                        "id": "1ec0a5a4-89c4-48b4-868e-cdbe3e50bd3e",
-                        "name": "Gbest_techworld",
-                        "email": "princegbest555@gmail.com",
-                        "password_hash": "79f60f937dd78353845cec515f9a77348c5a25b4cbc8c4afea454856093d3c21"
-                    }
-                )
-                conn.execute(
-                    text(
-                        "INSERT OR IGNORE INTO users (id, name, email, password_hash, is_admin, provider, is_suspended) "
-                        "VALUES (:id, :name, :email, :password_hash, 0, 'email', 0)"
-                    ),
-                    {
-                        "id": "3e9afd32-84e1-4074-8df0-e49e85343acd",
-                        "name": "Alade Gbolahan",
-                        "email": "aladegbolahan28@gmail.com",
-                        "password_hash": "79f60f937dd78353845cec515f9a77348c5a25b4cbc8c4afea454856093d3c21"
-                    }
-                )
-                conn.commit()
-                print("Admin user seeded successfully.")
+            # Load initial users and projects from seed file if present
+            import json
+            from pathlib import Path
+            seed_file = Path(__file__).resolve().parent / "seeds" / "initial_data.json"
+            if seed_file.exists():
+                try:
+                    with open(seed_file, "r", encoding="utf-8") as f:
+                        seed_data = json.load(f)
+
+                    for u in seed_data.get("users", []):
+                        conn.execute(
+                            text(
+                                "INSERT OR IGNORE INTO users (id, name, email, password_hash, google_id, avatar_url, provider, is_admin, is_suspended) "
+                                "VALUES (:id, :name, :email, :password_hash, :google_id, :avatar_url, :provider, :is_admin, :is_suspended)"
+                            ),
+                            {
+                                "id": u["id"],
+                                "name": u["name"],
+                                "email": u["email"],
+                                "password_hash": u.get("password_hash"),
+                                "google_id": u.get("google_id"),
+                                "avatar_url": u.get("avatar_url"),
+                                "provider": u.get("provider", "email"),
+                                "is_admin": 1 if u.get("is_admin") else 0,
+                                "is_suspended": 1 if u.get("is_suspended") else 0,
+                            }
+                        )
+
+                    for p in seed_data.get("projects", []):
+                        conn.execute(
+                            text(
+                                "INSERT OR IGNORE INTO projects (id, user_id, name, description, thumbnail_url, aspect_ratio, project_data) "
+                                "VALUES (:id, :user_id, :name, :description, :thumbnail_url, :aspect_ratio, :project_data)"
+                            ),
+                            {
+                                "id": p["id"],
+                                "user_id": p.get("user_id"),
+                                "name": p.get("name", "Untitled"),
+                                "description": p.get("description"),
+                                "thumbnail_url": p.get("thumbnail_url"),
+                                "aspect_ratio": p.get("aspect_ratio", "16:9"),
+                                "project_data": p.get("project_data"),
+                            }
+                        )
+                    conn.commit()
+                except Exception as ex:
+                    print(f"Seed file load note: {ex}")
 
             # If ADMIN_PASSWORD env var is supplied on Render, update the admin password hash
             admin_pwd = getattr(settings, "ADMIN_PASSWORD", "").strip()

@@ -257,8 +257,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onOpenProject, onN
                     onClick={() => {
                       setShowUserDropdown(false);
                       logout();
+                      if (onNavigateHome) {
+                        onNavigateHome();
+                      } else {
+                        window.location.href = '/';
+                      }
                     }}
-                    className="w-full px-2.5 py-1.5 text-left text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg flex items-center space-x-2"
+                    className="w-full px-2.5 py-1.5 text-left text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg flex items-center space-x-2 cursor-pointer"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>Sign Out</span>

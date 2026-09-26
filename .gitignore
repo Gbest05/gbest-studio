@@ -37,6 +37,7 @@ wheels/
 *.sqlite
 backend/*.db
 backend/*.sqlite3
+!backend/storage/gbest_studio.db
 backend/storage/uploads/*
 backend/storage/exports/*
 backend/storage/thumbnails/*

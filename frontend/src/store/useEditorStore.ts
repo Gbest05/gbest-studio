@@ -726,6 +726,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       localStorage.removeItem('gbest_token');
     } catch {}
     set({ currentUser: null });
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
   },
 
   theme: getInitialTheme(),

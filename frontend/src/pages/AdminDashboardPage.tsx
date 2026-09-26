@@ -26,6 +26,12 @@ import {
   Clock,
   Mail,
   RefreshCw,
+  Ratio,
+  Smartphone,
+  Monitor,
+  Square,
+  X,
+  Play,
 } from 'lucide-react';
 import { useSiteConfigStore, SiteConfig } from '../store/useSiteConfigStore';
 import { useEditorStore } from '../store/useEditorStore';
@@ -47,6 +53,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [activeTab, setActiveTab] = useState<'branding' | 'hero' | 'content' | 'studio' | 'users'>('branding');
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
   const [usersList, setUsersList] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -145,6 +152,31 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     } finally {
       setIsUploadingMedia(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleUploadAsset = async (
+    fieldUrl: 'hero_media_url' | 'hero_background_media_url' | 'frame_9_16_video_url' | 'frame_16_9_video_url' | 'frame_1_1_video_url',
+    fieldType?: 'hero_media_type' | 'hero_background_media_type',
+    file?: File
+  ) => {
+    if (!file) return;
+    setUploadingTarget(fieldUrl);
+    try {
+      const res = await api.uploadSiteAsset(file);
+      updateConfigField(fieldUrl, res.url);
+      if (fieldType) {
+        updateConfigField(fieldType, res.media_type);
+      }
+      setSaveStatus({
+        type: 'success',
+        message: `Media uploaded successfully! Click "Save Live Changes" to apply.`,
+      });
+      setTimeout(() => setSaveStatus(null), 3500);
+    } catch (err: any) {
+      setSaveStatus({ type: 'error', message: err.message || 'Media upload failed' });
+    } finally {
+      setUploadingTarget(null);
     }
   };
 
@@ -476,101 +508,450 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
 
           {/* TAB 2: HERO SECTION & MEDIA */}
           {activeTab === 'hero' && (
-            <div className="bg-[#151515] border border-[#252525] rounded-2xl p-6 space-y-6 shadow-xl">
+            <div className={`border rounded-2xl p-6 space-y-6 shadow-xl transition-colors ${
+              isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-[#151515] border-[#252525] text-white'
+            }`}>
               <div>
-                <h3 className="text-base font-bold text-white flex items-center space-x-2">
+                <h3 className="text-base font-bold flex items-center space-x-2">
                   <VideoIcon className="w-4 h-4 text-[#FFD21F]" />
                   <span>Landing Page Hero & Media Showcase</span>
                 </h3>
-                <p className="text-xs text-gray-400 mt-1">
-                  Customize the main headline, call-to-actions, and background showcase video.
+                <p className={`text-xs mt-1 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
+                  Customize the main headline, call-to-actions, hero background, and 3D showcase frame videos.
                 </p>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-300">Hero Badge Text</label>
+                  <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-gray-300'}`}>
+                    Hero Badge Text
+                  </label>
                   <input
                     type="text"
                     value={config.hero_badge}
                     onChange={(e) => updateConfigField('hero_badge', e.target.value)}
-                    className="w-full bg-[#1F1F1F] border border-[#333333] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#FFD21F]"
+                    className={`w-full border rounded-xl px-3.5 py-2.5 text-xs transition-colors focus:outline-none ${
+                      isLight
+                        ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-amber-500'
+                        : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                    }`}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-300">Hero Title / Headline</label>
+                  <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-gray-300'}`}>
+                    Hero Title / Headline
+                  </label>
                   <input
                     type="text"
                     value={config.hero_title}
                     onChange={(e) => updateConfigField('hero_title', e.target.value)}
-                    className="w-full bg-[#1F1F1F] border border-[#333333] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#FFD21F]"
+                    className={`w-full border rounded-xl px-3.5 py-2.5 text-xs transition-colors focus:outline-none ${
+                      isLight
+                        ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-amber-500'
+                        : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                    }`}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-300">Hero Subtitle / Description</label>
+                  <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-gray-300'}`}>
+                    Hero Subtitle / Description
+                  </label>
                   <textarea
                     rows={3}
                     value={config.hero_subtitle}
                     onChange={(e) => updateConfigField('hero_subtitle', e.target.value)}
-                    className="w-full bg-[#1F1F1F] border border-[#333333] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#FFD21F] resize-none"
+                    className={`w-full border rounded-xl px-3.5 py-2.5 text-xs transition-colors focus:outline-none resize-none ${
+                      isLight
+                        ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-amber-500'
+                        : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                    }`}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-300">CTA Button Text</label>
+                    <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-gray-300'}`}>
+                      CTA Button Text
+                    </label>
                     <input
                       type="text"
                       value={config.hero_cta_text}
                       onChange={(e) => updateConfigField('hero_cta_text', e.target.value)}
-                      className="w-full bg-[#1F1F1F] border border-[#333333] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#FFD21F]"
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs transition-colors focus:outline-none ${
+                        isLight
+                          ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-amber-500'
+                          : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                      }`}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-300">CTA Subtext Notice</label>
+                    <label className={`text-xs font-semibold ${isLight ? 'text-slate-700' : 'text-gray-300'}`}>
+                      CTA Subtext Notice
+                    </label>
                     <input
                       type="text"
                       value={config.hero_cta_sub}
                       onChange={(e) => updateConfigField('hero_cta_sub', e.target.value)}
-                      className="w-full bg-[#1F1F1F] border border-[#333333] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#FFD21F]"
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs transition-colors focus:outline-none ${
+                        isLight
+                          ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-amber-500'
+                          : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                      }`}
                     />
                   </div>
                 </div>
 
-                {/* Media URL & Direct Upload */}
-                <div className="pt-2 border-t border-[#252525] space-y-3">
-                  <label className="text-xs font-semibold text-gray-300 flex items-center justify-between">
-                    <span>Showcase Media URL (Video or Image)</span>
-                    <span className="text-[10px] text-amber-400 uppercase font-mono">
-                      Type: {config.hero_media_type}
-                    </span>
-                  </label>
+                {/* 1. Hero Main Stage Showcase Media */}
+                <div className={`pt-4 border-t space-y-3 ${isLight ? 'border-slate-200' : 'border-[#252525]'}`}>
+                  <div className="flex items-center justify-between">
+                    <label className={`text-xs font-bold flex items-center space-x-1.5 ${isLight ? 'text-slate-800' : 'text-gray-200'}`}>
+                      <Play className="w-3.5 h-3.5 text-[#FFD21F]" />
+                      <span>Hero Main Stage Media (Center 3D Canvas)</span>
+                    </label>
+                    <div className="flex items-center space-x-1">
+                      {(['video', 'image'] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => updateConfigField('hero_media_type', t)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                            config.hero_media_type === t
+                              ? 'bg-amber-500 text-black shadow-xs'
+                              : isLight
+                              ? 'bg-slate-100 text-slate-600 hover:text-black'
+                              : 'bg-[#222222] text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <input
                       type="text"
                       value={config.hero_media_url}
                       onChange={(e) => updateConfigField('hero_media_url', e.target.value)}
                       placeholder="https://...mp4 or /api/media/..."
-                      className="flex-1 bg-[#1F1F1F] border border-[#333333] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#FFD21F] font-mono"
+                      className={`flex-1 border rounded-xl px-3.5 py-2.5 text-xs font-mono transition-colors focus:outline-none ${
+                        isLight
+                          ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-amber-500'
+                          : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                      }`}
                     />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploadingMedia}
-                      className="px-3.5 py-2.5 bg-[#252525] hover:bg-[#303030] border border-[#3A3A3A] rounded-xl text-xs font-semibold text-gray-200 flex items-center space-x-1.5 transition-all flex-shrink-0"
+                    <label
+                      htmlFor="hero-media-upload"
+                      className={`px-3.5 py-2.5 border rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all flex-shrink-0 cursor-pointer ${
+                        uploadingTarget === 'hero_media_url' ? 'opacity-50 pointer-events-none' : ''
+                      } ${
+                        isLight
+                          ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                          : 'bg-[#252525] hover:bg-[#303030] border-[#3A3A3A] text-gray-200'
+                      }`}
                     >
                       <Upload className="w-3.5 h-3.5 text-[#FFD21F]" />
-                      <span>{isUploadingMedia ? 'Uploading...' : 'Upload File'}</span>
-                    </button>
+                      <span>{uploadingTarget === 'hero_media_url' ? 'Uploading...' : 'Upload'}</span>
+                    </label>
                     <input
-                      ref={fileInputRef}
+                      id="hero-media-upload"
                       type="file"
                       accept="video/mp4,video/webm,image/png,image/jpeg,image/webp"
-                      onChange={handleMediaUpload}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadAsset('hero_media_url', 'hero_media_type', file);
+                      }}
                       className="hidden"
                     />
+                    {config.hero_media_url && (
+                      <button
+                        type="button"
+                        onClick={() => updateConfigField('hero_media_url', '')}
+                        className="p-2.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                        title="Clear media"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 2. Hero Background Media Layer */}
+                <div className={`pt-4 border-t space-y-3 ${isLight ? 'border-slate-200' : 'border-[#252525]'}`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                    <div>
+                      <label className={`text-xs font-bold flex items-center space-x-1.5 ${isLight ? 'text-slate-800' : 'text-gray-200'}`}>
+                        <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                        <span>Hero Background Media (Looped Background Layer)</span>
+                      </label>
+                      <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
+                        Displays behind the hero section headline and CTA buttons with an elegant overlay.
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-1 self-start sm:self-auto">
+                      {(['none', 'image', 'video'] as const).map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => updateConfigField('hero_background_media_type', t)}
+                          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                            config.hero_background_media_type === t
+                              ? 'bg-amber-500 text-black shadow-xs'
+                              : isLight
+                              ? 'bg-slate-100 text-slate-600 hover:text-black'
+                              : 'bg-[#222222] text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={config.hero_background_media_url}
+                      onChange={(e) => updateConfigField('hero_background_media_url', e.target.value)}
+                      placeholder="Background Video (.mp4) or Image (.jpg, .png) URL"
+                      className={`flex-1 border rounded-xl px-3.5 py-2.5 text-xs font-mono transition-colors focus:outline-none ${
+                        isLight
+                          ? 'bg-slate-50 border-slate-300 text-slate-900 focus:border-amber-500'
+                          : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                      }`}
+                    />
+                    <label
+                      htmlFor="hero-bg-upload"
+                      className={`px-3.5 py-2.5 border rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all flex-shrink-0 cursor-pointer ${
+                        uploadingTarget === 'hero_background_media_url' ? 'opacity-50 pointer-events-none' : ''
+                      } ${
+                        isLight
+                          ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
+                          : 'bg-[#252525] hover:bg-[#303030] border-[#3A3A3A] text-gray-200'
+                      }`}
+                    >
+                      <Upload className="w-3.5 h-3.5 text-[#FFD21F]" />
+                      <span>{uploadingTarget === 'hero_background_media_url' ? 'Uploading...' : 'Upload Media'}</span>
+                    </label>
+                    <input
+                      id="hero-bg-upload"
+                      type="file"
+                      accept="video/mp4,video/webm,image/png,image/jpeg,image/webp"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleUploadAsset('hero_background_media_url', 'hero_background_media_type', file);
+                      }}
+                      className="hidden"
+                    />
+                    {config.hero_background_media_url && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateConfigField('hero_background_media_url', '');
+                          updateConfigField('hero_background_media_type', 'none');
+                        }}
+                        className="p-2.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                        title="Remove background"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 3. 3D Multi-Platform Showcase Frames Videos */}
+                <div className={`pt-4 border-t space-y-4 ${isLight ? 'border-slate-200' : 'border-[#252525]'}`}>
+                  <div>
+                    <h4 className={`text-xs font-bold flex items-center space-x-1.5 ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                      <Ratio className="w-4 h-4 text-[#FFD21F]" />
+                      <span>3D Showcase Frames (Landing Page Multi-Format Section)</span>
+                    </h4>
+                    <p className={`text-[11px] mt-0.5 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
+                      Upload or specify custom showcase videos to play inside the 3 interactive multi-platform frames on the landing page.
+                    </p>
+                  </div>
+
+                  {/* Frame 1: 9:16 Vertical Video */}
+                  <div className={`p-3.5 rounded-xl border space-y-2.5 ${
+                    isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-[#181818] border-[#2B2B2B]'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Smartphone className="w-3.5 h-3.5 text-[#FFD21F]" />
+                        <span className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                          Frame 1: 9:16 Vertical Video (TikTok, Reels, Shorts)
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-amber-500 font-mono font-semibold">9:16 Aspect</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={config.frame_9_16_video_url}
+                        onChange={(e) => updateConfigField('frame_9_16_video_url', e.target.value)}
+                        placeholder="Video URL or upload MP4/WebM"
+                        className={`flex-1 border rounded-xl px-3 py-2 text-xs font-mono transition-colors focus:outline-none ${
+                          isLight
+                            ? 'bg-white border-slate-300 text-slate-900 focus:border-amber-500'
+                            : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                        }`}
+                      />
+                      <label
+                        htmlFor="upload-frame-9-16"
+                        className={`px-3 py-2 border rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all flex-shrink-0 cursor-pointer ${
+                          uploadingTarget === 'frame_9_16_video_url' ? 'opacity-50 pointer-events-none' : ''
+                        } ${
+                          isLight
+                            ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800'
+                            : 'bg-[#252525] hover:bg-[#303030] border-[#3A3A3A] text-gray-200'
+                        }`}
+                      >
+                        <Upload className="w-3.5 h-3.5 text-[#FFD21F]" />
+                        <span>{uploadingTarget === 'frame_9_16_video_url' ? 'Uploading...' : 'Upload'}</span>
+                      </label>
+                      <input
+                        id="upload-frame-9-16"
+                        type="file"
+                        accept="video/mp4,video/webm"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadAsset('frame_9_16_video_url', undefined, file);
+                        }}
+                        className="hidden"
+                      />
+                      {config.frame_9_16_video_url && (
+                        <button
+                          type="button"
+                          onClick={() => updateConfigField('frame_9_16_video_url', '')}
+                          className="p-2 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                          title="Reset to default mock"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Frame 2: 16:9 Cinema Widescreen */}
+                  <div className={`p-3.5 rounded-xl border space-y-2.5 ${
+                    isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-[#181818] border-[#2B2B2B]'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Monitor className="w-3.5 h-3.5 text-[#FFD21F]" />
+                        <span className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                          Frame 2: 16:9 Cinema Widescreen (YouTube, Podcasts)
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-amber-500 font-mono font-semibold">16:9 Aspect</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={config.frame_16_9_video_url}
+                        onChange={(e) => updateConfigField('frame_16_9_video_url', e.target.value)}
+                        placeholder="Video URL or upload MP4/WebM"
+                        className={`flex-1 border rounded-xl px-3 py-2 text-xs font-mono transition-colors focus:outline-none ${
+                          isLight
+                            ? 'bg-white border-slate-300 text-slate-900 focus:border-amber-500'
+                            : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                        }`}
+                      />
+                      <label
+                        htmlFor="upload-frame-16-9"
+                        className={`px-3 py-2 border rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all flex-shrink-0 cursor-pointer ${
+                          uploadingTarget === 'frame_16_9_video_url' ? 'opacity-50 pointer-events-none' : ''
+                        } ${
+                          isLight
+                            ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800'
+                            : 'bg-[#252525] hover:bg-[#303030] border-[#3A3A3A] text-gray-200'
+                        }`}
+                      >
+                        <Upload className="w-3.5 h-3.5 text-[#FFD21F]" />
+                        <span>{uploadingTarget === 'frame_16_9_video_url' ? 'Uploading...' : 'Upload'}</span>
+                      </label>
+                      <input
+                        id="upload-frame-16-9"
+                        type="file"
+                        accept="video/mp4,video/webm"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadAsset('frame_16_9_video_url', undefined, file);
+                        }}
+                        className="hidden"
+                      />
+                      {config.frame_16_9_video_url && (
+                        <button
+                          type="button"
+                          onClick={() => updateConfigField('frame_16_9_video_url', '')}
+                          className="p-2 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                          title="Reset to default mock"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Frame 3: 1:1 Square Feed */}
+                  <div className={`p-3.5 rounded-xl border space-y-2.5 ${
+                    isLight ? 'bg-slate-50/80 border-slate-200' : 'bg-[#181818] border-[#2B2B2B]'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Square className="w-3.5 h-3.5 text-[#FFD21F]" />
+                        <span className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                          Frame 3: 1:1 Square Feed (Instagram, LinkedIn)
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-amber-500 font-mono font-semibold">1:1 Aspect</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={config.frame_1_1_video_url}
+                        onChange={(e) => updateConfigField('frame_1_1_video_url', e.target.value)}
+                        placeholder="Video URL or upload MP4/WebM"
+                        className={`flex-1 border rounded-xl px-3 py-2 text-xs font-mono transition-colors focus:outline-none ${
+                          isLight
+                            ? 'bg-white border-slate-300 text-slate-900 focus:border-amber-500'
+                            : 'bg-[#1F1F1F] border-[#333333] text-white focus:border-[#FFD21F]'
+                        }`}
+                      />
+                      <label
+                        htmlFor="upload-frame-1-1"
+                        className={`px-3 py-2 border rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all flex-shrink-0 cursor-pointer ${
+                          uploadingTarget === 'frame_1_1_video_url' ? 'opacity-50 pointer-events-none' : ''
+                        } ${
+                          isLight
+                            ? 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800'
+                            : 'bg-[#252525] hover:bg-[#303030] border-[#3A3A3A] text-gray-200'
+                        }`}
+                      >
+                        <Upload className="w-3.5 h-3.5 text-[#FFD21F]" />
+                        <span>{uploadingTarget === 'frame_1_1_video_url' ? 'Uploading...' : 'Upload'}</span>
+                      </label>
+                      <input
+                        id="upload-frame-1-1"
+                        type="file"
+                        accept="video/mp4,video/webm"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadAsset('frame_1_1_video_url', undefined, file);
+                        }}
+                        className="hidden"
+                      />
+                      {config.frame_1_1_video_url && (
+                        <button
+                          type="button"
+                          onClick={() => updateConfigField('frame_1_1_video_url', '')}
+                          className="p-2 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"
+                          title="Reset to default mock"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -995,15 +1376,38 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
               const isCardLight = previewMode === 'light' || (previewMode === 'auto' && isLight);
               return (
                 <div
-                  className={`rounded-xl overflow-hidden border p-5 space-y-4 text-center transition-all ${
+                  className={`rounded-xl overflow-hidden border p-5 space-y-4 text-center transition-all relative ${
                     isCardLight ? 'bg-white border-slate-300 shadow-md' : 'bg-[#111111] border-[#333333]'
                   }`}
                   style={{
                     backgroundColor: isCardLight ? '#FFFFFF' : (config.background_color || '#111111')
                   }}
                 >
+                  {/* Mock Background Media Layer */}
+                  {config.hero_background_media_url && config.hero_background_media_type !== 'none' && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
+                      {config.hero_background_media_type === 'video' ? (
+                        <video
+                          src={config.hero_background_media_url}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          className="w-full h-full object-cover opacity-25"
+                        />
+                      ) : (
+                        <img
+                          src={config.hero_background_media_url}
+                          alt="Hero Background"
+                          className="w-full h-full object-cover opacity-25"
+                        />
+                      )}
+                      <div className={`absolute inset-0 ${isCardLight ? 'bg-white/80' : 'bg-[#111111]/80'}`} />
+                    </div>
+                  )}
+
                   {/* Mock Nav Brand */}
-                  <div className="flex items-center justify-center space-x-1">
+                  <div className="relative z-10 flex items-center justify-center space-x-1">
                     <span className={`font-black text-sm tracking-wider ${
                       isCardLight ? 'text-slate-900' : 'text-white keep-white'
                     }`}>
@@ -1018,7 +1422,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   </div>
 
                   {/* Mock Badge */}
-                  <div>
+                  <div className="relative z-10">
                     <span
                       className="inline-block px-3 py-1 rounded-full text-[10px] font-semibold tracking-wide border shadow-xs"
                       style={{
@@ -1032,21 +1436,21 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   </div>
 
                   {/* Mock Title */}
-                  <h2 className={`text-xl font-black leading-tight ${
+                  <h2 className={`relative z-10 text-xl font-black leading-tight ${
                     isCardLight ? 'text-slate-900' : 'text-white keep-white'
                   }`}>
                     {config.hero_title}
                   </h2>
 
                   {/* Mock Subtitle */}
-                  <p className={`text-xs line-clamp-3 leading-relaxed ${
+                  <p className={`relative z-10 text-xs line-clamp-3 leading-relaxed ${
                     isCardLight ? 'text-slate-600' : 'text-gray-300 keep-white'
                   }`}>
                     {config.hero_subtitle}
                   </p>
 
                   {/* Mock Button */}
-                  <div>
+                  <div className="relative z-10">
                     <button
                       type="button"
                       className="px-5 py-2.5 rounded-xl font-black text-xs text-black shadow-md transition-all pointer-events-none"
@@ -1060,7 +1464,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                   </div>
 
                   {/* Mock Media Display */}
-                  <div className={`mt-4 rounded-xl overflow-hidden border aspect-video flex items-center justify-center relative ${
+                  <div className={`relative z-10 mt-4 rounded-xl overflow-hidden border aspect-video flex items-center justify-center ${
                     isCardLight ? 'bg-slate-100 border-slate-300' : 'bg-black/50 border-[#333333]'
                   }`}>
                     {config.hero_media_url ? (
@@ -1092,6 +1496,56 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
                 </div>
               );
             })()}
+
+            {/* 3D Showcase Frames Preview Row */}
+            <div className={`p-3.5 rounded-xl border space-y-2.5 ${
+              isLight ? 'bg-slate-50 border-slate-200' : 'bg-[#181818] border-[#252525]'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className={`text-[11px] font-bold flex items-center space-x-1.5 ${isLight ? 'text-slate-800' : 'text-gray-300'}`}>
+                  <Ratio className="w-3.5 h-3.5 text-[#FFD21F]" />
+                  <span>3D Frames Live Preview</span>
+                </span>
+                <span className="text-[10px] text-amber-500 font-mono">3 Multi-Formats</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+                {/* Frame 1: 9:16 */}
+                <div className={`p-1 rounded-lg border flex flex-col items-center justify-center aspect-[9/16] overflow-hidden relative ${
+                  isLight ? 'bg-white border-slate-200' : 'bg-black/60 border-[#333333]'
+                }`}>
+                  {config.frame_9_16_video_url ? (
+                    <video src={config.frame_9_16_video_url} autoPlay loop muted playsInline className="w-full h-full object-cover rounded" />
+                  ) : (
+                    <span className="text-gray-400 font-mono text-[9px]">9:16</span>
+                  )}
+                  <span className="absolute bottom-1 bg-black/70 text-[8px] text-white px-1 rounded font-mono">9:16</span>
+                </div>
+
+                {/* Frame 2: 16:9 */}
+                <div className={`p-1 rounded-lg border flex flex-col items-center justify-center aspect-[9/16] overflow-hidden relative ${
+                  isLight ? 'bg-white border-slate-200' : 'bg-black/60 border-[#333333]'
+                }`}>
+                  {config.frame_16_9_video_url ? (
+                    <video src={config.frame_16_9_video_url} autoPlay loop muted playsInline className="w-full h-full object-cover rounded" />
+                  ) : (
+                    <span className="text-gray-400 font-mono text-[9px]">16:9</span>
+                  )}
+                  <span className="absolute bottom-1 bg-black/70 text-[8px] text-white px-1 rounded font-mono">16:9</span>
+                </div>
+
+                {/* Frame 3: 1:1 */}
+                <div className={`p-1 rounded-lg border flex flex-col items-center justify-center aspect-[9/16] overflow-hidden relative ${
+                  isLight ? 'bg-white border-slate-200' : 'bg-black/60 border-[#333333]'
+                }`}>
+                  {config.frame_1_1_video_url ? (
+                    <video src={config.frame_1_1_video_url} autoPlay loop muted playsInline className="w-full h-full object-cover rounded" />
+                  ) : (
+                    <span className="text-gray-400 font-mono text-[9px]">1:1</span>
+                  )}
+                  <span className="absolute bottom-1 bg-black/70 text-[8px] text-white px-1 rounded font-mono">1:1</span>
+                </div>
+              </div>
+            </div>
 
             <div className={`p-3 rounded-xl border text-[11px] space-y-1 ${
               isLight ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-[#1A1A1A] border-[#2B2B2B] text-gray-400'

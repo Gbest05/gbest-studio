@@ -23,7 +23,7 @@ DEFAULT_SITE_CONFIG: Dict[str, Any] = {
     "accent_color": "#3B82F6",
     "background_color": "#111111",
 
-    # Hero Section
+    # Hero Section & Stage Media
     "hero_badge": "AI-Powered Video Creation Platform",
     "hero_title": "Create Viral Videos in Seconds",
     "hero_subtitle": "GBEST Studio gives creators, influencers, and brands the ultimate AI toolkit: precise speech captions, auto-silence cutter, dynamic canvas styling, and instant high-res export.",
@@ -31,6 +31,13 @@ DEFAULT_SITE_CONFIG: Dict[str, Any] = {
     "hero_cta_sub": "Free forever · No credit card required",
     "hero_media_url": "https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1188-large.mp4",
     "hero_media_type": "video",
+    "hero_background_media_url": "",
+    "hero_background_media_type": "none",
+
+    # 3D Multi-Platform Showcase Frames Videos
+    "frame_9_16_video_url": "",
+    "frame_16_9_video_url": "",
+    "frame_1_1_video_url": "",
 
     # Features Section
     "features_title": "Professional Studio Tools. Zero Learning Curve.",

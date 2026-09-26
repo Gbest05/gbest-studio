@@ -301,7 +301,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </header>
 
         {/* HERO SECTION WITH 3D PERSPECTIVE VIDEO STAGE */}
-        <section className="px-6 py-12 sm:py-20 max-w-6xl mx-auto text-center flex flex-col items-center">
+        <section className="relative px-6 py-12 sm:py-20 max-w-6xl mx-auto text-center flex flex-col items-center">
+          {/* Ambient Hero Background Media Layer */}
+          {config.hero_background_media_url && config.hero_background_media_type !== 'none' && (
+            <div className="absolute inset-0 pointer-events-none -z-10 overflow-hidden rounded-3xl">
+              {config.hero_background_media_type === 'video' ? (
+                <video
+                  src={config.hero_background_media_url}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover opacity-20 filter blur-[1px]"
+                />
+              ) : (
+                <img
+                  src={config.hero_background_media_url}
+                  alt="Hero Background"
+                  className="w-full h-full object-cover opacity-20 filter blur-[1px]"
+                />
+              )}
+              <div
+                className={`absolute inset-0 ${
+                  isLight
+                    ? 'bg-gradient-to-b from-white/70 via-white/85 to-white'
+                    : 'bg-gradient-to-b from-[#0E0E0E]/50 via-[#0E0E0E]/80 to-[#0E0E0E]'
+                }`}
+              />
+            </div>
+          )}
+
           {/* Badge */}
           <div className={`inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full text-xs mb-6 shadow ${
             isLight
@@ -610,24 +639,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 {/* Dynamic Island / Notch */}
                 <div className="w-16 h-3 bg-[#1F1F1F] rounded-full mx-auto z-20" />
 
-                {/* Simulated Video & Word Highlighting */}
-                <div className="absolute inset-0 bg-gradient-to-b from-[#1C1810] via-[#0E1520] to-[#14101E] flex flex-col items-center justify-center p-4 text-center">
-                  <div className="w-14 h-14 rounded-full bg-[#FFD21F]/10 border border-[#FFD21F]/40 flex items-center justify-center mb-3 animate-pulse">
-                    <Sparkles className="w-6 h-6 text-[#FFD21F]" />
+                {/* Simulated Video or Admin Uploaded Video */}
+                {config.frame_9_16_video_url ? (
+                  <video
+                    src={config.frame_9_16_video_url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-b from-[#1C1810] via-[#0E1520] to-[#14101E] flex flex-col items-center justify-center p-4 text-center">
+                    <div className="w-14 h-14 rounded-full bg-[#FFD21F]/10 border border-[#FFD21F]/40 flex items-center justify-center mb-3 animate-pulse">
+                      <Sparkles className="w-6 h-6 text-[#FFD21F]" />
+                    </div>
+                    {/* Floating Karaoke Subtitle */}
+                    <div className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-xs font-black flex items-center">
+                      <span>This edit is </span>
+                      <span className="text-[#FFD21F] bg-[#FFD21F]/20 px-1 mx-1 rounded">INSANE</span>
+                      <Flame className="w-3.5 h-3.5 text-[#FF8A00] inline" />
+                    </div>
                   </div>
-                  {/* Floating Karaoke Subtitle */}
-                  <div className="bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-xs font-black flex items-center">
-                    <span>This edit is </span>
-                    <span className="text-[#FFD21F] bg-[#FFD21F]/20 px-1 mx-1 rounded">INSANE</span>
-                    <Flame className="w-3.5 h-3.5 text-[#FF8A00] inline" />
-                  </div>
-                </div>
+                )}
 
                 {/* Overlay TikTok UI elements */}
-                <div className="relative z-10 flex items-end justify-between text-left">
+                <div className="relative z-10 flex items-end justify-between text-left pointer-events-none drop-shadow-md">
                   <div className="space-y-0.5">
                     <p className="text-[11px] font-bold text-white">@gbest_creator</p>
-                    <p className="text-[9px] text-gray-300">Edited in 2 mins with AI #video #editing</p>
+                    <p className="text-[9px] text-gray-200">Edited in 2 mins with AI #video #editing</p>
                   </div>
                   <div className="flex flex-col items-center space-y-2 text-white">
                     <div className="flex flex-col items-center">
@@ -660,7 +700,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             >
               <div className="aspect-video w-full rounded-2xl bg-black border-2 border-[#2A2A2A] shadow-2xl overflow-hidden relative p-3 flex flex-col justify-between">
                 {/* Header timecode */}
-                <div className="flex items-center justify-between z-10">
+                <div className="flex items-center justify-between z-10 pointer-events-none">
                   <span className="text-[9px] font-mono text-emerald-400 bg-black/60 px-1.5 py-0.5 rounded border border-emerald-500/30">
                     REC 4K 60FPS
                   </span>
@@ -669,17 +709,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </span>
                 </div>
 
-                {/* Center Content */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#1E112A] via-[#10192A] to-[#111] flex flex-col items-center justify-center p-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#FFD21F] text-black flex items-center justify-center shadow-xl shadow-amber-500/20 mb-2">
-                    <Play className="w-5 h-5 fill-black ml-0.5" />
+                {/* Center Content / Video */}
+                {config.frame_16_9_video_url ? (
+                  <video
+                    src={config.frame_16_9_video_url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-tr from-[#1E112A] via-[#10192A] to-[#111] flex flex-col items-center justify-center p-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[#FFD21F] text-black flex items-center justify-center shadow-xl shadow-amber-500/20 mb-2">
+                      <Play className="w-5 h-5 fill-black ml-0.5" />
+                    </div>
+                    <span className="text-xs font-extrabold text-white">Cinematic Documentary</span>
+                    <span className="text-[10px] text-[#FFD21F]">Color Graded: Teal & Orange</span>
                   </div>
-                  <span className="text-xs font-extrabold text-white">Cinematic Documentary</span>
-                  <span className="text-[10px] text-[#FFD21F]">Color Graded: Teal & Orange</span>
-                </div>
+                )}
 
                 {/* Audio Waveform bottom bar */}
-                <div className="relative z-10 bg-black/75 backdrop-blur-md rounded-lg p-1.5 flex items-center justify-between text-[9px] font-mono">
+                <div className="relative z-10 bg-black/75 backdrop-blur-md rounded-lg p-1.5 flex items-center justify-between text-[9px] font-mono pointer-events-none">
                   <div className="flex items-center space-x-1">
                     <Music className="w-3 h-3 text-[#FF8A00]" />
                     <span className="text-gray-300">Isolated 320kbps Audio</span>
@@ -705,22 +756,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }`}
             >
               <div className="aspect-square w-full max-w-[240px] mx-auto rounded-2xl bg-black border-2 border-[#2A2A2A] shadow-2xl overflow-hidden relative p-3 flex flex-col justify-between">
-                <div className="flex items-center justify-between z-10">
+                <div className="flex items-center justify-between z-10 pointer-events-none">
                   <span className="text-[9px] font-bold text-[#FFD21F] bg-[#1F1F1F] px-2 py-0.5 rounded-full border border-[#FFD21F]/30">
                     SQUARE FEED
                   </span>
                   <Star className="w-3.5 h-3.5 text-[#FFD21F] fill-[#FFD21F]" />
                 </div>
 
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1C2012] via-[#1F1A12] to-[#121212] flex flex-col items-center justify-center p-4 text-center">
-                  <Rocket className="w-8 h-8 text-[#FFD21F] mb-1" />
-                  <p className="text-xs font-black text-white leading-tight">
-                    Product Teaser <br />
-                    <span className="text-[#FFD21F]">With Dynamic Text</span>
-                  </p>
-                </div>
+                {/* Simulated or Admin-Uploaded Video */}
+                {config.frame_1_1_video_url ? (
+                  <video
+                    src={config.frame_1_1_video_url}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#1C2012] via-[#1F1A12] to-[#121212] flex flex-col items-center justify-center p-4 text-center">
+                    <Rocket className="w-8 h-8 text-[#FFD21F] mb-1" />
+                    <p className="text-xs font-black text-white leading-tight">
+                      Product Teaser <br />
+                      <span className="text-[#FFD21F]">With Dynamic Text</span>
+                    </p>
+                  </div>
+                )}
 
-                <div className="relative z-10 bg-black/75 backdrop-blur-md rounded-lg p-1.5 flex items-center justify-between text-[9px]">
+                <div className="relative z-10 bg-black/75 backdrop-blur-md rounded-lg p-1.5 flex items-center justify-between text-[9px] pointer-events-none">
                   <span className="text-gray-300 font-medium">1080 x 1080 px</span>
                   <span className="text-emerald-400 font-bold">Ready to Post</span>
                 </div>
